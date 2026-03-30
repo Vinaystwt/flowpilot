@@ -278,12 +278,6 @@ FLOW_FEE_PAYER_PRIVATE_KEY=
 
 ---
 
-## Built By
-
-Solo builder. Zero coding background. Built entirely via terminal and AI-assisted development during one hackathon sprint on a $0 budget using 100% free tier services.
-
----
-
 ## License
 
 MIT - PL Genesis: Frontiers of Collaboration Hackathon, March 2026.
