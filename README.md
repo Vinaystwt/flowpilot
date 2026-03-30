@@ -11,7 +11,6 @@
 [![Live Demo](https://img.shields.io/badge/Live_Demo-flowpilot--puce.vercel.app-00d4ff?style=for-the-badge)](https://flowpilot-puce.vercel.app)
 [![Flow Testnet](https://img.shields.io/badge/Flow_Testnet-0xf8105fdaa45bc140-7F77DD?style=for-the-badge)](https://testnet.flowscan.io/account/0xf8105fdaa45bc140)
 [![GitHub](https://img.shields.io/badge/GitHub-Vinaystwt%2Fflowpilot-white?style=for-the-badge&logo=github)](https://github.com/Vinaystwt/flowpilot)
-[![Budget](https://img.shields.io/badge/Budget-%240-00ff88?style=for-the-badge)](https://github.com/Vinaystwt/flowpilot)
 
 </div>
 
