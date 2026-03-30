@@ -6,33 +6,38 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 export async function POST(req: NextRequest) {
   try {
     const { vault } = await req.json();
-
     const gain = vault.current_value_usd - vault.principal_usd;
     const gainPct = ((gain / vault.principal_usd) * 100).toFixed(2);
     const days = Math.max(1, Math.floor(
       (Date.now() - new Date(vault.created_at).getTime()) / (1000 * 60 * 60 * 24)
     ));
 
-    // Generate AI performance analysis
-    const analysisPrompt = `You are FlowPilot's onchain attestation system. Write a 2-sentence performance verdict for this DeFi vault. Be precise and data-driven.
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [{
+        role: "user",
+        content: `You are FlowPilot's attestation AI. Write a 2-sentence performance verdict for this DeFi vault. Be precise and data-driven.
 
 Vault: ${vault.strategy.strategy_type} strategy
 Principal: $${vault.principal_usd} | Current: $${vault.current_value_usd.toFixed(2)}
 Return: ${gainPct}% over ${days} days
 Allocation: ${vault.strategy.allocations.map((a: any) => `${a.protocol} ${a.percentage}%`).join(", ")}
 
-Write the verdict:`;
-
-    const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: [{ role: "user", content: analysisPrompt }],
+Write the verdict now:`
+      }],
       temperature: 0.6,
       max_tokens: 150,
     });
 
     const aiVerdict = completion.choices[0]?.message?.content || "Vault performed within expected parameters.";
 
-    // Build attestation object
+    // Compute conviction score
+    const convictionScore = Math.min(100, Math.round(
+      (parseFloat(gainPct) / vault.strategy.target_return_pct) * 50 +
+      (days / vault.strategy.time_horizon_days) * 30 +
+      (vault.strategy.strategy_type === "conservative" ? 20 : vault.strategy.strategy_type === "balanced" ? 15 : 10)
+    ));
+
     const attestation = {
       type: "FlowPilotPerformanceAttestation",
       version: "1.0",
@@ -42,7 +47,6 @@ Write the verdict:`;
       network: "flow-testnet",
       subject: {
         vaultId: vault.id,
-        userEmail: vault.user_email,
         strategyType: vault.strategy.strategy_type,
         ipfsCID: vault.ipfs_cid,
       },
@@ -54,32 +58,24 @@ Write the verdict:`;
         durationDays: days,
         targetReturnPct: vault.strategy.target_return_pct,
         goalAchieved: parseFloat(gainPct) >= vault.strategy.target_return_pct,
+        convictionScore,
       },
       allocations: vault.strategy.allocations,
       aiVerdict,
-      protocolFee: {
-        rate: "15%",
-        appliesTo: "gains above principal",
-      },
+      protocolFee: { rate: "15%", appliesTo: "gains above principal" },
     };
 
-    // Upload attestation to IPFS
     const content = JSON.stringify(attestation, null, 2);
-    const blob = new Blob([content], { type: "application/json" });
-    const formData = new FormData();
-    formData.append("file", blob, `attestation-${vault.id}-${Date.now()}.json`);
-
     let attestationCID = `attestation-${Date.now()}`;
+    let real = false;
+
+    // Try NFT.storage
     try {
-      const ipfsRes = await fetch("https://api.web3.storage/upload", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${process.env.WEB3_STORAGE_TOKEN}` },
-        body: formData,
-      });
-      if (ipfsRes.ok) {
-        const ipfsData = await ipfsRes.json();
-        attestationCID = ipfsData.cid || attestationCID;
-      }
+      const { NFTStorage, Blob: NFTBlob } = await import("nft.storage");
+      const client = new NFTStorage({ token: process.env.NFT_STORAGE_TOKEN || "" });
+      const blob = new NFTBlob([content], { type: "application/json" });
+      const cid = await client.storeBlob(blob);
+      if (cid) { attestationCID = cid; real = true; }
     } catch {}
 
     return NextResponse.json({
@@ -88,6 +84,8 @@ Write the verdict:`;
       attestationCID,
       ipfsUrl: `https://ipfs.io/ipfs/${attestationCID}`,
       aiVerdict,
+      convictionScore,
+      real,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Attestation failed";

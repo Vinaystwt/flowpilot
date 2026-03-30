@@ -84,6 +84,8 @@ All three contracts deployed at `0xf8105fdaa45bc140`:
 
 ## Architecture
 
+![FlowPilot System Architecture](docs/architecture.svg)
+
 Three-layer system:
 
 **Intent Layer** — User types a financial goal in plain English. Groq LLM parses it into a structured JSON strategy with allocation percentages, rebalancing thresholds, exit conditions, and time horizons.

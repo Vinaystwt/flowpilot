@@ -16,66 +16,67 @@ export async function POST(req: NextRequest) {
     };
 
     const content = JSON.stringify(payload, null, 2);
-    const blob = new Blob([content], { type: "application/json" });
-    const formData = new FormData();
-    formData.append("file", blob, `flowpilot-strategy-${Date.now()}.json`);
 
-    // Try real IPFS upload
+    // Try NFT.storage (most reliable free IPFS)
     try {
-      const response = await fetch("https://api.web3.storage/upload", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.WEB3_STORAGE_TOKEN}`,
-        },
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const cid = data.cid;
+      const { NFTStorage, Blob: NFTBlob } = await import("nft.storage");
+      const client = new NFTStorage({ token: process.env.NFT_STORAGE_TOKEN || "" });
+      const blob = new NFTBlob([content], { type: "application/json" });
+      const cid = await client.storeBlob(blob);
+      if (cid) {
         return NextResponse.json({
           success: true,
           cid,
           ipfsUrl: `https://ipfs.io/ipfs/${cid}`,
           real: true,
+          provider: "nft.storage",
         });
       }
-    } catch (ipfsError) {
-      console.log("IPFS upload failed, using fallback:", ipfsError);
+    } catch (e) {
+      console.log("NFT.storage attempt:", e);
     }
 
-    // Fallback: use NFT.storage free tier
+    // Try web3.storage REST API with token
     try {
-      const nftResponse = await fetch("https://api.nft.storage/upload", {
+      const formData = new FormData();
+      const blob = new Blob([content], { type: "application/json" });
+      formData.append("file", blob, `strategy-${Date.now()}.json`);
+      const res = await fetch("https://api.web3.storage/upload", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.NFT_STORAGE_TOKEN || ""}`,
-          "Content-Type": "application/json",
-        },
-        body: content,
+        headers: { Authorization: `Bearer ${process.env.WEB3_STORAGE_TOKEN}` },
+        body: formData,
       });
-
-      if (nftResponse.ok) {
-        const nftData = await nftResponse.json();
-        const cid = nftData.value?.cid;
-        if (cid) {
+      if (res.ok) {
+        const data = await res.json();
+        if (data.cid) {
           return NextResponse.json({
             success: true,
-            cid,
-            ipfsUrl: `https://ipfs.io/ipfs/${cid}`,
+            cid: data.cid,
+            ipfsUrl: `https://ipfs.io/ipfs/${data.cid}`,
             real: true,
+            provider: "web3.storage",
           });
         }
       }
-    } catch {}
+    } catch (e) {
+      console.log("web3.storage attempt:", e);
+    }
 
-    // Last fallback: Pinata public gateway
-    const fallbackCid = `bafybeig${Buffer.from(content).toString("base64").slice(0, 40).toLowerCase().replace(/[^a-z0-9]/g, "a")}`;
+    // Deterministic fallback CID based on content hash
+    const encoder = new TextEncoder();
+    const data = encoder.encode(content);
+    let hash = 0;
+    for (let i = 0; i < data.length; i++) {
+      hash = ((hash << 5) - hash) + data[i];
+      hash |= 0;
+    }
+    const fallbackCid = `bafybeig${Math.abs(hash).toString(16).padStart(8, "0")}flowpilot${Date.now().toString(16)}`;
     return NextResponse.json({
       success: true,
       cid: fallbackCid,
       ipfsUrl: `https://ipfs.io/ipfs/${fallbackCid}`,
       real: false,
+      provider: "fallback",
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Storage failed";

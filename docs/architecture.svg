@@ -1,0 +1,78 @@
+<svg width="900" height="620" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="620" fill="#0a0a0a"/>
+  <rect x="325" y="20" width="250" height="48" rx="10" fill="#0f1f1f" stroke="#00d4ff" stroke-width="1.5"/>
+  <text x="450" y="40" text-anchor="middle" font-family="monospace" font-size="13" font-weight="bold" fill="#00d4ff">USER</text>
+  <text x="450" y="58" text-anchor="middle" font-family="monospace" font-size="11" fill="#555">plain English financial goal</text>
+  <line x1="450" y1="68" x2="450" y2="108" stroke="#00d4ff" stroke-width="1" marker-end="url(#arrow)"/>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+  <rect x="250" y="108" width="400" height="52" rx="10" fill="#0d0d1f" stroke="#7F77DD" stroke-width="1.5"/>
+  <text x="450" y="130" text-anchor="middle" font-family="monospace" font-size="13" font-weight="bold" fill="#a78bfa">Next.js 14 Frontend (Vercel)</text>
+  <text x="450" y="148" text-anchor="middle" font-family="monospace" font-size="10" fill="#555">/ · /confirm · /dashboard · /mutate · /vaults · /attestation · /explore</text>
+  <line x1="450" y1="160" x2="450" y2="198" stroke="#7F77DD" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="20" y="198" width="860" height="110" rx="12" fill="#0a0a0a" stroke="#1f1f1f" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="450" y="218" text-anchor="middle" font-family="monospace" font-size="11" fill="#444">API LAYER — Vercel Serverless (10 routes)</text>
+  <rect x="35" y="226" width="120" height="68" rx="6" fill="#0a0f1f" stroke="#185FA5" stroke-width="1"/>
+  <text x="95" y="248" text-anchor="middle" font-family="monospace" font-size="10" font-weight="bold" fill="#378ADD">parse-intent</text>
+  <text x="95" y="265" text-anchor="middle" font-family="monospace" font-size="9" fill="#444">NL → JSON · Groq</text>
+  <rect x="168" y="226" width="120" height="68" rx="6" fill="#0a0f1f" stroke="#185FA5" stroke-width="1"/>
+  <text x="228" y="248" text-anchor="middle" font-family="monospace" font-size="10" font-weight="bold" fill="#378ADD">store-strategy</text>
+  <text x="228" y="265" text-anchor="middle" font-family="monospace" font-size="9" fill="#444">IPFS · web3.storage</text>
+  <rect x="301" y="226" width="120" height="68" rx="6" fill="#0a0f1f" stroke="#185FA5" stroke-width="1"/>
+  <text x="361" y="248" text-anchor="middle" font-family="monospace" font-size="10" font-weight="bold" fill="#378ADD">deploy-vault</text>
+  <text x="361" y="265" text-anchor="middle" font-family="monospace" font-size="9" fill="#444">Flow REST · FCL</text>
+  <rect x="434" y="226" width="120" height="68" rx="6" fill="#0a0f1f" stroke="#185FA5" stroke-width="1"/>
+  <text x="494" y="248" text-anchor="middle" font-family="monospace" font-size="10" font-weight="bold" fill="#378ADD">mutate-strategy</text>
+  <text x="494" y="265" text-anchor="middle" font-family="monospace" font-size="9" fill="#444">NL diff · IPFS v2</text>
+  <rect x="567" y="226" width="120" height="68" rx="6" fill="#0a0f1f" stroke="#185FA5" stroke-width="1"/>
+  <text x="627" y="244" text-anchor="middle" font-family="monospace" font-size="10" font-weight="bold" fill="#378ADD">mint-attestation</text>
+  <text x="627" y="261" text-anchor="middle" font-family="monospace" font-size="9" fill="#444">AI verdict · IPFS</text>
+  <text x="627" y="278" text-anchor="middle" font-family="monospace" font-size="9" fill="#444">conviction score</text>
+  <rect x="700" y="226" width="165" height="68" rx="6" fill="#0a0f1f" stroke="#185FA5" stroke-width="1"/>
+  <text x="782" y="244" text-anchor="middle" font-family="monospace" font-size="10" font-weight="bold" fill="#378ADD">+4 more routes</text>
+  <text x="782" y="261" text-anchor="middle" font-family="monospace" font-size="9" fill="#444">send-report · archive</text>
+  <text x="782" y="278" text-anchor="middle" font-family="monospace" font-size="9" fill="#444">vault-health · schedule</text>
+  <line x1="95" y1="308" x2="95" y2="368" stroke="#378ADD" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="228" y1="308" x2="228" y2="368" stroke="#1D9E75" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="361" y1="308" x2="361" y2="368" stroke="#7F77DD" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="494" y1="308" x2="530" y2="368" stroke="#378ADD" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="627" y1="308" x2="627" y2="368" stroke="#1D9E75" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="782" y1="308" x2="782" y2="368" stroke="#D85A30" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="30" y="368" width="140" height="60" rx="8" fill="#1a1200" stroke="#BA7517" stroke-width="1.5"/>
+  <text x="100" y="392" text-anchor="middle" font-family="monospace" font-size="12" font-weight="bold" fill="#EF9F27">Groq AI</text>
+  <text x="100" y="410" text-anchor="middle" font-family="monospace" font-size="9" fill="#666">llama-3.3-70b-versatile</text>
+  <text x="100" y="422" text-anchor="middle" font-family="monospace" font-size="9" fill="#444">parse · mutate · health</text>
+  <rect x="180" y="368" width="130" height="60" rx="8" fill="#001a0f" stroke="#0F6E56" stroke-width="1.5"/>
+  <text x="245" y="392" text-anchor="middle" font-family="monospace" font-size="12" font-weight="bold" fill="#1D9E75">IPFS</text>
+  <text x="245" y="410" text-anchor="middle" font-family="monospace" font-size="9" fill="#666">NFT.storage · web3.storage</text>
+  <text x="245" y="422" text-anchor="middle" font-family="monospace" font-size="9" fill="#444">strategy · attestations</text>
+  <rect x="320" y="368" width="220" height="60" rx="8" fill="#0d0a1f" stroke="#534AB7" stroke-width="1.5"/>
+  <text x="430" y="392" text-anchor="middle" font-family="monospace" font-size="12" font-weight="bold" fill="#a78bfa">Flow Testnet</text>
+  <text x="430" y="410" text-anchor="middle" font-family="monospace" font-size="9" fill="#666">Cadence · FCL · REST API</text>
+  <text x="430" y="422" text-anchor="middle" font-family="monospace" font-size="9" fill="#444">0xf8105fdaa45bc140</text>
+  <rect x="550" y="368" width="130" height="60" rx="8" fill="#001020" stroke="#0C447C" stroke-width="1.5"/>
+  <text x="615" y="392" text-anchor="middle" font-family="monospace" font-size="12" font-weight="bold" fill="#378ADD">Supabase</text>
+  <text x="615" y="410" text-anchor="middle" font-family="monospace" font-size="9" fill="#666">PostgreSQL · free tier</text>
+  <text x="615" y="422" text-anchor="middle" font-family="monospace" font-size="9" fill="#444">vault metadata · sessions</text>
+  <rect x="690" y="368" width="185" height="60" rx="8" fill="#1a0800" stroke="#993C1D" stroke-width="1.5"/>
+  <text x="782" y="388" text-anchor="middle" font-family="monospace" font-size="11" font-weight="bold" fill="#D85A30">Resend + Lighthouse</text>
+  <text x="782" y="406" text-anchor="middle" font-family="monospace" font-size="9" fill="#666">email reports · Filecoin</text>
+  <text x="782" y="420" text-anchor="middle" font-family="monospace" font-size="9" fill="#444">weekly digest · archival</text>
+  <line x1="430" y1="428" x2="430" y2="472" stroke="#7F77DD" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="180" y="472" width="500" height="88" rx="10" fill="#0a0814" stroke="#534AB7" stroke-width="1" stroke-dasharray="3 2"/>
+  <text x="430" y="492" text-anchor="middle" font-family="monospace" font-size="11" fill="#7F77DD">Smart Contracts · 0xf8105fdaa45bc140 · Flow Testnet</text>
+  <rect x="195" y="504" width="148" height="44" rx="6" fill="#0d0a1f" stroke="#534AB7" stroke-width="1"/>
+  <text x="269" y="522" text-anchor="middle" font-family="monospace" font-size="10" font-weight="bold" fill="#a78bfa">FlowPilotRegistry</text>
+  <text x="269" y="538" text-anchor="middle" font-family="monospace" font-size="9" fill="#555">vault registry · CIDs</text>
+  <rect x="356" y="504" width="148" height="44" rx="6" fill="#0d0a1f" stroke="#534AB7" stroke-width="1"/>
+  <text x="430" y="522" text-anchor="middle" font-family="monospace" font-size="10" font-weight="bold" fill="#a78bfa">FlowPilotVault</text>
+  <text x="430" y="538" text-anchor="middle" font-family="monospace" font-size="9" fill="#555">strategy · lifecycle</text>
+  <rect x="517" y="504" width="148" height="44" rx="6" fill="#0d0a1f" stroke="#534AB7" stroke-width="1"/>
+  <text x="591" y="522" text-anchor="middle" font-family="monospace" font-size="10" font-weight="bold" fill="#a78bfa">FeeCollector</text>
+  <text x="591" y="538" text-anchor="middle" font-family="monospace" font-size="9" fill="#555">15% perf fee · treasury</text>
+  <line x1="245" y1="428" x2="245" y2="576" stroke="#1D9E75" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="20" y="576" width="430" height="36" rx="8" fill="#001a0f" stroke="#0F6E56" stroke-width="1"/>
+  <text x="235" y="596" text-anchor="middle" font-family="monospace" font-size="10" fill="#1D9E75">IPFS + Filecoin · Strategy CIDs · Attestations · Vault histories</text>
+  <line x1="615" y1="428" x2="615" y2="576" stroke="#378ADD" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="460" y="576" width="415" height="36" rx="8" fill="#001020" stroke="#0C447C" stroke-width="1"/>
+  <text x="667" y="596" text-anchor="middle" font-family="monospace" font-size="10" fill="#378ADD">Supabase · vaults · report_history · email queue</text>
+</svg>
