@@ -1,0 +1,25 @@
+{
+  "networks": {
+    "testnet": "access.devnet.nodes.onflow.org:9000"
+  },
+  "accounts": {
+    "testnet-account": {
+      "address": "0xf8105fdaa45bc140",
+      "key": "dd50fe9447d82eacc0cb33906832d1e6a4ca718826f734920e6b86c5bf89664a"
+    }
+  },
+  "contracts": {
+    "FlowPilotVault": "./cadence/contracts/FlowPilotVault.cdc",
+    "FlowPilotFeeCollector": "./cadence/contracts/FlowPilotFeeCollector.cdc",
+    "FlowPilotRegistry": "./cadence/contracts/FlowPilotRegistry.cdc"
+  },
+  "deployments": {
+    "testnet": {
+      "testnet-account": [
+        "FlowPilotRegistry",
+        "FlowPilotFeeCollector",
+        "FlowPilotVault"
+      ]
+    }
+  }
+}
