@@ -6,13 +6,14 @@ export default function HomePage() {
   const [intent, setIntent] = useState("");
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [focused, setFocused] = useState<string | null>(null);
   const router = useRouter();
 
   const examples = [
     "Grow my $500 by 10% in 6 months. Keep it safe.",
-    "Invest $200 and earn passive income. Rebalance weekly.",
-    "Put $1000 to work. Never lose more than 5% of my money.",
-    "Save $300 and grow it steadily over the next year.",
+    "Invest $200 aggressively for maximum yield.",
+    "Put $1000 to work. Never lose more than 5%.",
+    "Save $300 and grow it steadily over a year.",
   ];
 
   const handleSubmit = async () => {
@@ -31,7 +32,7 @@ export default function HomePage() {
         localStorage.setItem("fp_email", email);
         router.push("/confirm");
       } else {
-        alert("Could not parse your goal. Please try rephrasing it.");
+        alert("Could not parse your goal. Try rephrasing.");
         setIsLoading(false);
       }
     } catch {
@@ -41,116 +42,223 @@ export default function HomePage() {
   };
 
   return (
-    <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", background: "var(--bg)" }}>
+    <main style={{ minHeight: "100vh", background: "#080808", color: "white", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
       
-      {/* Logo */}
-      <div style={{ textAlign: "center", marginBottom: "48px" }}>
-        <div style={{ fontSize: "36px", fontWeight: 900, letterSpacing: "-2px", color: "var(--accent)" }}>
-          FlowPilot
+      {/* Nav */}
+      <nav style={{ padding: "20px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #111" }}>
+        <div style={{ fontSize: "18px", fontWeight: 900, letterSpacing: "-1px", color: "#00d4ff" }}>FlowPilot</div>
+        <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
+          <span style={{ fontSize: "13px", color: "#444" }}>Built on Flow</span>
+          <span style={{ fontSize: "13px", color: "#444" }}>Powered by Groq</span>
+          <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#00ff88", boxShadow: "0 0 8px #00ff88" }} />
+          <span style={{ fontSize: "12px", color: "#00ff88" }}>Testnet Live</span>
         </div>
-        <div style={{ color: "var(--text-muted)", marginTop: "6px", fontSize: "13px", letterSpacing: "3px", textTransform: "uppercase" }}>
-          Your money. On autopilot.
-        </div>
-      </div>
+      </nav>
 
-      {/* Headline */}
-      <div style={{ textAlign: "center", marginBottom: "48px", maxWidth: "600px" }}>
-        <h1 style={{ fontSize: "clamp(32px, 5vw, 52px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-2px", margin: "0 0 20px 0" }}>
-          Tell us your{" "}
-          <span style={{ color: "var(--accent)" }}>financial goal.</span>
-          <br />
-          We handle everything else.
+      {/* Hero */}
+      <div style={{ maxWidth: "900px", margin: "0 auto", padding: "80px 40px 60px" }}>
+        
+        {/* Badge */}
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "6px 16px", borderRadius: "100px", background: "#00d4ff12", border: "1px solid #00d4ff30", marginBottom: "32px" }}>
+          <span style={{ fontSize: "12px", color: "#00d4ff" }}>⚡ Natural Language DeFi · Flow Blockchain · IPFS Storage</span>
+        </div>
+
+        {/* Headline */}
+        <h1 style={{ fontSize: "clamp(40px, 6vw, 72px)", fontWeight: 900, lineHeight: 1.05, letterSpacing: "-3px", margin: "0 0 24px 0" }}>
+          Your financial goal,<br />
+          <span style={{ background: "linear-gradient(135deg, #00d4ff, #00ff88)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            executed automatically.
+          </span>
         </h1>
-        <p style={{ color: "#888", fontSize: "17px", lineHeight: 1.6, margin: 0 }}>
-          No wallet setup. No gas fees. No manual rebalancing.
-          Just type what you want — FlowPilot builds and runs your
-          personalized DeFi strategy automatically.
+
+        <p style={{ fontSize: "18px", color: "#666", lineHeight: 1.7, maxWidth: "560px", margin: "0 0 56px 0" }}>
+          Type what you want in plain English. FlowPilot builds a personalized DeFi strategy and runs it autonomously on Flow — no wallet, no gas, no complexity.
         </p>
-      </div>
 
-      {/* Input Card */}
-      <div className="glow" style={{ width: "100%", maxWidth: "520px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "20px", padding: "28px", marginBottom: "24px" }}>
-        <div style={{ marginBottom: "16px" }}>
-          <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "2px", color: "var(--text-muted)", marginBottom: "10px" }}>
-            Your financial goal
-          </label>
-          <textarea
-            value={intent}
-            onChange={(e) => setIntent(e.target.value)}
-            placeholder="e.g. Grow my $500 by 8% over 6 months. Keep it relatively safe."
-            style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "12px", padding: "14px", color: "white", fontSize: "14px", lineHeight: 1.6, resize: "none", outline: "none", fontFamily: "inherit", minHeight: "90px" }}
-            rows={3}
-          />
+        {/* Main input card */}
+        <div style={{ background: "#0f0f0f", border: "1px solid #1a1a1a", borderRadius: "24px", padding: "32px", marginBottom: "16px", boxShadow: "0 0 80px rgba(0,212,255,0.06)" }}>
+          
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase" as const, letterSpacing: "2px", color: "#444", marginBottom: "10px" }}>
+              Your financial goal
+            </label>
+            <textarea
+              value={intent}
+              onChange={(e) => setIntent(e.target.value)}
+              onFocus={() => setFocused("intent")}
+              onBlur={() => setFocused(null)}
+              placeholder="e.g. Grow my $500 by 8% over 6 months. Keep it relatively safe."
+              rows={3}
+              style={{
+                width: "100%",
+                background: focused === "intent" ? "rgba(0,212,255,0.04)" : "rgba(255,255,255,0.02)",
+                border: `1px solid ${focused === "intent" ? "#00d4ff40" : "#1a1a1a"}`,
+                borderRadius: "14px",
+                padding: "16px",
+                color: "white",
+                fontSize: "15px",
+                lineHeight: 1.6,
+                resize: "none" as const,
+                outline: "none",
+                fontFamily: "inherit",
+                transition: "all 0.2s",
+                boxSizing: "border-box" as const,
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: "24px" }}>
+            <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase" as const, letterSpacing: "2px", color: "#444", marginBottom: "10px" }}>
+              Email for weekly reports
+            </label>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onFocus={() => setFocused("email")}
+              onBlur={() => setFocused(null)}
+              type="email"
+              placeholder="you@example.com"
+              style={{
+                width: "100%",
+                background: focused === "email" ? "rgba(0,212,255,0.04)" : "rgba(255,255,255,0.02)",
+                border: `1px solid ${focused === "email" ? "#00d4ff40" : "#1a1a1a"}`,
+                borderRadius: "14px",
+                padding: "16px",
+                color: "white",
+                fontSize: "15px",
+                outline: "none",
+                fontFamily: "inherit",
+                transition: "all 0.2s",
+                boxSizing: "border-box" as const,
+              }}
+            />
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            disabled={!intent.trim() || !email.trim() || isLoading}
+            style={{
+              width: "100%",
+              padding: "18px",
+              borderRadius: "14px",
+              fontWeight: 800,
+              fontSize: "15px",
+              letterSpacing: "0.3px",
+              border: "none",
+              cursor: (!intent.trim() || !email.trim() || isLoading) ? "not-allowed" : "pointer",
+              background: (!intent.trim() || !email.trim() || isLoading)
+                ? "#1a1a1a"
+                : "linear-gradient(135deg, #00d4ff, #00ff88)",
+              color: (!intent.trim() || !email.trim() || isLoading) ? "#333" : "#000",
+              transition: "all 0.2s",
+              fontFamily: "inherit",
+            }}
+          >
+            {isLoading ? "Building your strategy with AI..." : "Launch My Autopilot →"}
+          </button>
         </div>
 
-        <div style={{ marginBottom: "20px" }}>
-          <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "2px", color: "var(--text-muted)", marginBottom: "10px" }}>
-            Email for weekly reports
-          </label>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            type="email"
-            placeholder="you@example.com"
-            style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: "12px", padding: "14px", color: "white", fontSize: "14px", outline: "none", fontFamily: "inherit" }}
-          />
+        {/* Examples */}
+        <div style={{ marginBottom: "80px" }}>
+          <div style={{ fontSize: "11px", textTransform: "uppercase" as const, letterSpacing: "2px", color: "#2a2a2a", marginBottom: "12px" }}>
+            Try an example
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap" as const, gap: "8px" }}>
+            {examples.map((ex, i) => (
+              <button
+                key={i}
+                onClick={() => setIntent(ex)}
+                style={{
+                  fontSize: "13px",
+                  color: "#555",
+                  padding: "8px 14px",
+                  borderRadius: "100px",
+                  border: "1px solid #1a1a1a",
+                  background: "transparent",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  transition: "all 0.15s",
+                  whiteSpace: "nowrap" as const,
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.color = "#aaa";
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = "#333";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.color = "#555";
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = "#1a1a1a";
+                }}
+              >
+                {ex}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <button
-          onClick={handleSubmit}
-          disabled={!intent.trim() || !email.trim() || isLoading}
-          style={{
-            width: "100%",
-            padding: "16px",
-            borderRadius: "12px",
-            fontWeight: 700,
-            fontSize: "14px",
-            letterSpacing: "0.5px",
-            border: "none",
-            cursor: (!intent.trim() || !email.trim() || isLoading) ? "not-allowed" : "pointer",
-            background: (!intent.trim() || !email.trim() || isLoading)
-              ? "#333"
-              : "linear-gradient(135deg, var(--accent), var(--accent-green))",
-            color: (!intent.trim() || !email.trim() || isLoading) ? "#666" : "#000",
-            transition: "all 0.2s",
-          }}
-        >
-          {isLoading ? "Building your strategy..." : "Launch My Autopilot →"}
-        </button>
-      </div>
-
-      {/* Examples */}
-      <div style={{ width: "100%", maxWidth: "520px", marginBottom: "48px" }}>
-        <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "2px", color: "#444", textAlign: "center", marginBottom: "12px" }}>
-          Try an example
+        {/* How it works */}
+        <div style={{ marginBottom: "80px" }}>
+          <div style={{ fontSize: "11px", textTransform: "uppercase" as const, letterSpacing: "3px", color: "#333", marginBottom: "40px", textAlign: "center" as const }}>
+            How It Works
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px" }}>
+            {[
+              {
+                step: "01",
+                title: "You type a goal",
+                desc: "Plain English. No financial jargon. Just tell FlowPilot what you want.",
+                color: "#00d4ff",
+              },
+              {
+                step: "02",
+                title: "AI builds your strategy",
+                desc: "Groq parses your intent into a structured DeFi allocation stored on IPFS.",
+                color: "#00ff88",
+              },
+              {
+                step: "03",
+                title: "Autopilot takes over",
+                desc: "A Cadence vault deploys on Flow. Rebalancing runs automatically. You do nothing.",
+                color: "#a78bfa",
+              },
+            ].map((item) => (
+              <div key={item.step} style={{ padding: "24px", background: "#0f0f0f", border: "1px solid #1a1a1a", borderRadius: "20px" }}>
+                <div style={{ fontSize: "11px", color: item.color, fontWeight: 700, letterSpacing: "2px", marginBottom: "12px" }}>{item.step}</div>
+                <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "8px", color: "white" }}>{item.title}</div>
+                <div style={{ fontSize: "13px", color: "#555", lineHeight: 1.6 }}>{item.desc}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {examples.map((ex, i) => (
-            <button
-              key={i}
-              onClick={() => setIntent(ex)}
-              style={{ textAlign: "left", fontSize: "13px", color: "#666", padding: "12px 16px", borderRadius: "10px", border: "1px solid var(--border)", background: "transparent", cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s" }}
-              onMouseEnter={(e) => { (e.target as HTMLButtonElement).style.color = "#ccc"; (e.target as HTMLButtonElement).style.borderColor = "#333"; }}
-              onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.color = "#666"; (e.target as HTMLButtonElement).style.borderColor = "var(--border)"; }}
-            >
-              "{ex}"
-            </button>
+
+        {/* Stats / Trust */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "80px" }}>
+          {[
+            { value: "0", label: "Wallet needed" },
+            { value: "$0", label: "Gas fees ever" },
+            { value: "3", label: "Contracts on Flow" },
+            { value: "∞", label: "Autopilot runtime" },
+          ].map((item) => (
+            <div key={item.label} style={{ textAlign: "center" as const, padding: "20px", background: "#0f0f0f", border: "1px solid #1a1a1a", borderRadius: "16px" }}>
+              <div style={{ fontSize: "28px", fontWeight: 900, letterSpacing: "-1px", color: "white", marginBottom: "4px" }}>{item.value}</div>
+              <div style={{ fontSize: "11px", color: "#444", textTransform: "uppercase" as const, letterSpacing: "1px" }}>{item.label}</div>
+            </div>
           ))}
         </div>
-      </div>
 
-      {/* Trust badges */}
-      <div style={{ display: "flex", gap: "40px", textAlign: "center" }}>
-        {[
-          { icon: "🔑", label: "No Wallet Needed" },
-          { icon: "⛽", label: "Zero Gas Fees" },
-          { icon: "🤖", label: "Fully Automated" },
-        ].map((item) => (
-          <div key={item.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-            <div style={{ fontSize: "24px" }}>{item.icon}</div>
-            <div style={{ fontSize: "11px", color: "#444", textTransform: "uppercase", letterSpacing: "1px" }}>{item.label}</div>
-          </div>
-        ))}
+        {/* Tech stack */}
+        <div style={{ borderTop: "1px solid #111", paddingTop: "40px", display: "flex", justifyContent: "center", gap: "32px", flexWrap: "wrap" as const }}>
+          {[
+            { name: "Flow Blockchain", desc: "Cadence smart contracts" },
+            { name: "Groq AI", desc: "llama-3.3-70b intent parsing" },
+            { name: "IPFS", desc: "Strategy storage" },
+            { name: "Filecoin", desc: "Vault archival" },
+          ].map((item) => (
+            <div key={item.name} style={{ textAlign: "center" as const }}>
+              <div style={{ fontSize: "13px", fontWeight: 700, color: "#555", marginBottom: "2px" }}>{item.name}</div>
+              <div style={{ fontSize: "11px", color: "#2a2a2a" }}>{item.desc}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </main>
   );

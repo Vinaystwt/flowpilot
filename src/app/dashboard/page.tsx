@@ -241,7 +241,7 @@ export default function DashboardPage() {
         <div style={{ textAlign: "center" as const, marginTop: "16px" }}>
           <button onClick={() => { localStorage.clear(); router.push("/"); }}
             style={{ background: "transparent", border: "none", color: "#2a2a2a", fontSize: "12px", cursor: "pointer", fontFamily: "inherit" }}>
-            Create another vault →
+            Modify strategy with AI →
           </button>
         </div>
       </div>
