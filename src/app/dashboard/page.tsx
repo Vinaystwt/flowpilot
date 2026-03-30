@@ -12,6 +12,8 @@ export default function DashboardPage() {
   const [aiReport, setAiReport] = useState("");
   const [loadingReport, setLoadingReport] = useState(false);
   const [health, setHealth] = useState<any>(null);
+  const [ipfsContent, setIpfsContent] = useState<any>(null);
+  const [verifying, setVerifying] = useState(false);
   const [displayValue, setDisplayValue] = useState(0);
   const [schedule, setSchedule] = useState<any>(null);
   const tickerRef = useRef<any>(null);
@@ -100,6 +102,22 @@ export default function DashboardPage() {
       const data = await res.json();
       if (data.success) setAiReport(data.report);
     } finally { setLoadingReport(false); }
+  };
+
+  const verifyIPFS = async () => {
+    if (!ipfsCID || verifying) return;
+    setVerifying(true);
+    try {
+      const res = await fetch("https://ipfs.io/ipfs/" + ipfsCID);
+      if (res.ok) {
+        const data = await res.json();
+        setIpfsContent(data);
+      }
+    } catch {
+      setIpfsContent({ error: "Content loading from IPFS network..." });
+    } finally {
+      setVerifying(false);
+    }
   };
 
   if (loading) return (
@@ -245,9 +263,22 @@ export default function DashboardPage() {
             Contract: 0xf8105fdaa45bc140 ↗
           </a>
           {ipfsCID && (
-            <a href={"https://ipfs.io/ipfs/" + ipfsCID} target="_blank" rel="noreferrer" style={{ display: "block", fontSize: "12px", color: "#00ff88", textDecoration: "none", fontFamily: "monospace" }}>
+            <a href={"https://ipfs.io/ipfs/" + ipfsCID} target="_blank" rel="noreferrer" style={{ display: "block", fontSize: "12px", color: "#00ff88", textDecoration: "none", fontFamily: "monospace", marginBottom: "8px" }}>
               IPFS: {ipfsCID.slice(0, 24)}... ↗
             </a>
+          )}
+          {ipfsCID && (
+            <button onClick={verifyIPFS} disabled={verifying} style={{ fontSize: "11px", color: verifying ? "#444" : "#00ff88", background: "transparent", border: "1px solid #00ff8830", borderRadius: "6px", padding: "4px 10px", cursor: verifying ? "not-allowed" : "pointer", fontFamily: "monospace" }}>
+              {verifying ? "Fetching from IPFS..." : "Verify IPFS Content"}
+            </button>
+          )}
+          {ipfsContent && !ipfsContent.error && (
+            <div style={{ marginTop: "10px", background: "#0a0a0a", borderRadius: "8px", padding: "10px", fontSize: "10px", color: "#444", fontFamily: "monospace", maxHeight: "80px", overflow: "hidden" }}>
+              <div style={{ color: "#00ff88", marginBottom: "4px" }}>IPFS content verified:</div>
+              {ipfsContent.protocol && <div>protocol: {ipfsContent.protocol}</div>}
+              {ipfsContent.strategy && <div>strategy: {ipfsContent.strategy.strategy_type}</div>}
+              {ipfsContent.timestamp && <div>stored: {new Date(ipfsContent.timestamp).toLocaleDateString()}</div>}
+            </div>
           )}
         </div>
 

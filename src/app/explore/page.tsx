@@ -99,7 +99,16 @@ export default function ExplorePage() {
                     </div>
                   </div>
                   <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    <div style={{ fontSize: "11px", color: "#333" }}>{new Date(vault.created_at).toLocaleDateString()}</div>
+                    <div style={{ fontSize: "11px", color: "#444", marginBottom: "2px" }}>
+                    Score: <span style={{ color: "#a78bfa", fontWeight: 700 }}>
+                      {Math.min(100, Math.round(
+                        ((vault.current_value_usd - vault.principal_usd) / vault.principal_usd / (vault.strategy.target_return_pct / 100)) * 60 +
+                        (vault.strategy.strategy_type === "conservative" ? 20 : vault.strategy.strategy_type === "balanced" ? 15 : 10) +
+                        Math.min(20, ((Date.now() - new Date(vault.created_at).getTime()) / (1000 * 60 * 60 * 24)) * 2)
+                      ))}
+                    </span>/100
+                  </div>
+                  <div style={{ fontSize: "11px", color: "#333" }}>{new Date(vault.created_at).toLocaleDateString()}</div>
                     {vault.ipfs_cid && (
                       <a href={"https://ipfs.io/ipfs/" + vault.ipfs_cid} target="_blank" rel="noreferrer" style={{ fontSize: "10px", color: "#00ff88", textDecoration: "none", fontFamily: "monospace" }}>
                         IPFS ↗
