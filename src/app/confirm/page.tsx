@@ -74,6 +74,22 @@ export default function ConfirmPage() {
       if (error) throw error;
 
       localStorage.setItem("fp_vault_id", vaultData.id);
+      
+      // Schedule first rebalance on Flow
+      try {
+        await fetch("/api/schedule-rebalance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            vaultId: vaultData.id,
+            rebalanceFrequencyDays: strategy.rebalance_frequency_days,
+            strategyType: strategy.strategy_type,
+            supabaseVaultId: vaultData.id,
+          }),
+        });
+      } catch (schedErr) {
+        console.log("Schedule note:", schedErr);
+      }
       localStorage.setItem("fp_tx_hash", mockTxHash);
       localStorage.setItem("fp_ipfs_cid", cid);
       
@@ -196,3 +212,4 @@ export default function ConfirmPage() {
     </main>
   );
 }
+// Note: schedule-rebalance is called from dashboard after vault creation

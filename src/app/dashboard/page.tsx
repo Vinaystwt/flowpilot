@@ -13,6 +13,7 @@ export default function DashboardPage() {
   const [loadingReport, setLoadingReport] = useState(false);
   const [health, setHealth] = useState<any>(null);
   const [displayValue, setDisplayValue] = useState(0);
+  const [schedule, setSchedule] = useState<any>(null);
   const tickerRef = useRef<any>(null);
   const router = useRouter();
 
@@ -37,6 +38,22 @@ export default function DashboardPage() {
         data.current_value_usd = parseFloat(simReturn.toFixed(2));
         setVault(data);
         setDisplayValue(data.current_value_usd);
+        
+        // Fetch schedule info
+        try {
+          const schedRes = await fetch("/api/schedule-rebalance", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              vaultId: data.id,
+              rebalanceFrequencyDays: data.strategy.rebalance_frequency_days,
+              strategyType: data.strategy.strategy_type,
+              supabaseVaultId: data.id,
+            }),
+          });
+          const schedData = await schedRes.json();
+          if (schedData.success) setSchedule(schedData.schedule);
+        } catch {}
       }
       setLoading(false);
     };

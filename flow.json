@@ -11,14 +11,16 @@
   "contracts": {
     "FlowPilotVault": "./cadence/contracts/FlowPilotVault.cdc",
     "FlowPilotFeeCollector": "./cadence/contracts/FlowPilotFeeCollector.cdc",
-    "FlowPilotRegistry": "./cadence/contracts/FlowPilotRegistry.cdc"
+    "FlowPilotRegistry": "./cadence/contracts/FlowPilotRegistry.cdc",
+    "FlowPilotScheduler": "./cadence/contracts/FlowPilotScheduler.cdc"
   },
   "deployments": {
     "testnet": {
       "testnet-account": [
         "FlowPilotRegistry",
         "FlowPilotFeeCollector",
-        "FlowPilotVault"
+        "FlowPilotVault",
+        "FlowPilotScheduler"
       ]
     }
   }
