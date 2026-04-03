@@ -2,15 +2,19 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { StrategyJSON } from "@/lib/types";
+import { formatShortHash, getScenarioPreview } from "@/lib/vault-presentation";
 
 export default function ConfirmPage() {
   const [strategy, setStrategy] = useState<StrategyJSON | null>(null);
   const [intent, setIntent] = useState("");
   const [email, setEmail] = useState("");
+  const [childAddress, setChildAddress] = useState("");
   const [isLaunching, setIsLaunching] = useState(false);
   const [launchStep, setLaunchStep] = useState("");
   const [txHash, setTxHash] = useState("");
   const [ipfsCID, setIpfsCID] = useState("");
+  const [ipfsUrl, setIpfsUrl] = useState("");
+  const [ipfsProvider, setIpfsProvider] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -21,6 +25,7 @@ export default function ConfirmPage() {
     setStrategy(JSON.parse(s));
     setIntent(i);
     setEmail(e);
+    setChildAddress(localStorage.getItem("fp_child_address") || "");
   }, [router]);
 
   const launchVault = async () => {
@@ -36,10 +41,32 @@ export default function ConfirmPage() {
         body: JSON.stringify({ strategy, userEmail: email }),
       });
       const ipfsData = await ipfsRes.json();
-      const cid = ipfsData.cid || "demo-cid-" + Date.now();
+      if (!ipfsRes.ok || !ipfsData.success || !ipfsData.real || !ipfsData.cid) {
+        throw new Error(ipfsData.error || "Real IPFS upload failed.");
+      }
+      const cid = ipfsData.cid;
       setIpfsCID(cid);
+      setIpfsUrl(ipfsData.ipfsUrl || "");
+      setIpfsProvider(ipfsData.provider || "");
 
-      // Step 2: Real FCL transaction
+      // Step 2: Ensure walletless child account exists
+      setLaunchStep("Provisioning walletless Flow account...");
+      let resolvedChildAddress = childAddress;
+      const onboardRes = await fetch("/api/onboard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const onboardData = await onboardRes.json();
+      if (onboardRes.ok && onboardData.success) {
+        resolvedChildAddress = onboardData.childAddress || resolvedChildAddress;
+        setChildAddress(resolvedChildAddress);
+        localStorage.setItem("fp_child_address", resolvedChildAddress || "");
+        localStorage.setItem("fp_onboard_tx_hash", onboardData.accountTxHash || "");
+        localStorage.setItem("fp_onboard_flowscan_url", onboardData.flowscanUrl || "");
+      }
+
+      // Step 3: Real FCL transaction
       setLaunchStep("Connecting to Flow wallet...");
       let realTxHash = "";
       try {
@@ -130,7 +157,7 @@ export default function ConfirmPage() {
 
       setTxHash(realTxHash);
 
-      // Step 3: Save to Supabase
+      // Step 4: Save to Supabase
       setLaunchStep("Saving vault record...");
       const { createClient } = await import("@supabase/supabase-js");
       const supabase = createClient(
@@ -142,7 +169,7 @@ export default function ConfirmPage() {
         .from("vaults")
         .insert({
           user_email: email,
-          flow_address: "0xf8105fdaa45bc140",
+          flow_address: resolvedChildAddress || "0xf8105fdaa45bc140",
           strategy: strategy,
           ipfs_cid: cid,
           current_value_usd: strategy.principal_usd,
@@ -155,7 +182,7 @@ export default function ConfirmPage() {
 
       if (error) throw error;
 
-      // Step 4: Schedule rebalance
+      // Step 5: Schedule rebalance
       setLaunchStep("Scheduling autopilot...");
       try {
         await fetch("/api/schedule-rebalance", {
@@ -173,6 +200,8 @@ export default function ConfirmPage() {
       localStorage.setItem("fp_vault_id", vaultData.id);
       localStorage.setItem("fp_tx_hash", realTxHash);
       localStorage.setItem("fp_ipfs_cid", cid);
+      localStorage.setItem("fp_ipfs_url", ipfsData.ipfsUrl || "");
+      localStorage.setItem("fp_ipfs_provider", ipfsData.provider || "");
 
       setLaunchStep("Autopilot deployed!");
       await new Promise(r => setTimeout(r, 1000));
@@ -193,27 +222,7 @@ export default function ConfirmPage() {
   );
 
   const strategyColor = { conservative: "#00ff88", balanced: "#00d4ff", growth: "#ff6644" }[strategy.strategy_type];
-  const upsideMultiplier = strategy.strategy_type === "growth" ? 1.55 : strategy.strategy_type === "balanced" ? 1.35 : 1.15;
-  const scenarios = [
-    {
-      label: "Protected",
-      returnPct: strategy.exit_threshold_pct,
-      terminalValue: strategy.principal_usd * (1 + strategy.exit_threshold_pct / 100),
-      color: "#ff4466",
-    },
-    {
-      label: "Base",
-      returnPct: strategy.target_return_pct,
-      terminalValue: strategy.principal_usd * (1 + strategy.target_return_pct / 100),
-      color: "#00d4ff",
-    },
-    {
-      label: "Upside",
-      returnPct: Number((strategy.target_return_pct * upsideMultiplier).toFixed(2)),
-      terminalValue: strategy.principal_usd * (1 + (strategy.target_return_pct * upsideMultiplier) / 100),
-      color: "#00ff88",
-    },
-  ];
+  const scenarios = getScenarioPreview(strategy);
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", background: "#080808", fontFamily: "system-ui, sans-serif" }}>
@@ -276,6 +285,7 @@ export default function ConfirmPage() {
           {[
             { icon: "📦", text: "Strategy uploaded to IPFS — content-addressed, permanent" },
             { icon: "⛓", text: "Real transaction submitted to Flow Testnet" },
+            { icon: "🪪", text: "Child account linked — walletless, gas-free forever" },
             { icon: "🤖", text: "Rebalance schedule created on FlowPilotScheduler" },
             { icon: "📧", text: "Weekly performance reports to your email" },
           ].map((item) => (
@@ -284,6 +294,22 @@ export default function ConfirmPage() {
               <span>{item.text}</span>
             </div>
           ))}
+        </div>
+
+        <div style={{ background: "#0d1016", border: "1px solid #1a2433", borderRadius: "16px", padding: "16px", marginBottom: "20px" }}>
+          <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "2px", color: "#5f748d", marginBottom: "12px" }}>Readiness Check</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
+            {[
+              { label: "Child Account", value: childAddress ? formatShortHash(childAddress, 6) : "Will provision on launch", color: "#d7ff85" },
+              { label: "IPFS Proof", value: ipfsCID ? formatShortHash(ipfsCID, 8) : "Real CID required", color: "#00ff88" },
+              { label: "Provider", value: ipfsProvider || "Storacha/Pinata fallback", color: "#9fd0ff" },
+            ].map((item) => (
+              <div key={item.label} style={{ background: "#101722", border: "1px solid #162131", borderRadius: "12px", padding: "12px" }}>
+                <div style={{ fontSize: "11px", color: "#70859c", marginBottom: "6px" }}>{item.label}</div>
+                <div style={{ fontSize: "13px", color: item.color }}>{item.value}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div style={{ background: "#0c1016", border: "1px solid #1a2433", borderRadius: "16px", padding: "16px", marginBottom: "20px" }}>
@@ -311,6 +337,14 @@ export default function ConfirmPage() {
             <div style={{ color: "#00ff88", fontSize: "14px", fontWeight: 600, marginBottom: "4px" }}>
               {launchStep}
             </div>
+            {ipfsCID && (
+              <div style={{ marginBottom: "6px" }}>
+                <a href={ipfsUrl || `https://storacha.link/ipfs/${ipfsCID}`} target="_blank" rel="noreferrer"
+                  style={{ fontSize: "11px", color: "#00ff88", textDecoration: "none", fontFamily: "monospace" }}>
+                  CID: {formatShortHash(ipfsCID, 10)} via {ipfsProvider || "ipfs"}
+                </a>
+              </div>
+            )}
             {txHash && (
               <a href={"https://testnet.flowscan.io/transaction/" + txHash} target="_blank" rel="noreferrer"
                 style={{ fontSize: "11px", color: "#00d4ff", textDecoration: "none", fontFamily: "monospace" }}>

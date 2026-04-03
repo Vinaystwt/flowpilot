@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { formatShortHash, getIpfsLink, getScenarioPreview } from "@/lib/vault-presentation";
 
 export default function DashboardPage() {
   const [vault, setVault] = useState<any>(null);
@@ -9,6 +10,9 @@ export default function DashboardPage() {
   const [sending, setSending] = useState(false);
   const [txHash, setTxHash] = useState("");
   const [ipfsCID, setIpfsCID] = useState("");
+  const [ipfsUrl, setIpfsUrl] = useState("");
+  const [ipfsProvider, setIpfsProvider] = useState("");
+  const [childAddress, setChildAddress] = useState("");
   const [aiReport, setAiReport] = useState("");
   const [loadingReport, setLoadingReport] = useState(false);
   const [health, setHealth] = useState<any>(null);
@@ -29,11 +33,17 @@ export default function DashboardPage() {
       const vaultId = localStorage.getItem("fp_vault_id");
       const tx = localStorage.getItem("fp_tx_hash") || "";
       const cid = localStorage.getItem("fp_ipfs_cid") || "";
+      const ipfsLink = localStorage.getItem("fp_ipfs_url") || "";
+      const ipfsSource = localStorage.getItem("fp_ipfs_provider") || "";
+      const onboardedAddress = localStorage.getItem("fp_child_address") || "";
       const archiveLink = localStorage.getItem("fp_archive_url") || "";
       const archiveProof = localStorage.getItem("fp_archive_cid") || "";
       const lighthouseProof = localStorage.getItem("fp_lighthouse_cid") || "";
       setTxHash(tx);
       setIpfsCID(cid);
+      setIpfsUrl(ipfsLink);
+      setIpfsProvider(ipfsSource);
+      setChildAddress(onboardedAddress);
       setArchiveUrl(archiveLink);
       setArchiveCID(archiveProof);
       setLighthouseCID(lighthouseProof);
@@ -119,7 +129,7 @@ export default function DashboardPage() {
     if (!ipfsCID || verifying) return;
     setVerifying(true);
     try {
-      const res = await fetch("https://ipfs.io/ipfs/" + ipfsCID);
+      const res = await fetch(getIpfsLink(ipfsCID, ipfsUrl));
       if (res.ok) {
         const data = await res.json();
         setIpfsContent(data);
@@ -174,27 +184,12 @@ export default function DashboardPage() {
   const isPositive = gain >= 0;
   const progressPct = Math.min(((displayValue / vault.principal_usd - 1) / (vault.strategy.target_return_pct / 100)) * 100, 100).toFixed(1);
   const daysLive = Math.max(1, Math.floor((Date.now() - new Date(vault.created_at).getTime()) / (1000 * 60 * 60 * 24)));
-  const scenarioMultiplier = vault.strategy.strategy_type === "growth" ? 1.55 : vault.strategy.strategy_type === "balanced" ? 1.35 : 1.15;
-  const scenarios = [
-    {
-      label: "Protected",
-      returnPct: vault.strategy.exit_threshold_pct,
-      value: vault.principal_usd * (1 + vault.strategy.exit_threshold_pct / 100),
-      color: "#ff4466",
-    },
-    {
-      label: "Base",
-      returnPct: vault.strategy.target_return_pct,
-      value: vault.principal_usd * (1 + vault.strategy.target_return_pct / 100),
-      color: "#00d4ff",
-    },
-    {
-      label: "Upside",
-      returnPct: Number((vault.strategy.target_return_pct * scenarioMultiplier).toFixed(2)),
-      value: vault.principal_usd * (1 + (vault.strategy.target_return_pct * scenarioMultiplier) / 100),
-      color: "#00ff88",
-    },
-  ];
+  const scenarios = getScenarioPreview(vault.strategy, vault.principal_usd).map((scenario) => ({
+    label: scenario.label,
+    returnPct: scenario.returnPct,
+    value: scenario.terminalValue,
+    color: scenario.color,
+  }));
 
   return (
     <div style={{ minHeight: "100vh", background: "#080808", padding: "32px 20px", fontFamily: "system-ui, sans-serif" }}>
@@ -216,6 +211,18 @@ export default function DashboardPage() {
         </div>
 
         <div style={{ background: "#0f0f0f", border: "1px solid #1a1a1a", borderRadius: "20px", padding: "28px", marginBottom: "12px", boxShadow: "0 0 60px rgba(0,212,255,0.04)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "18px" }}>
+            {[
+              { label: "Walletless", value: childAddress ? formatShortHash(childAddress, 6) : "Pending", color: "#d7ff85" },
+              { label: "Flow Tx", value: txHash ? formatShortHash(txHash, 8) : "Pending", color: "#00d4ff" },
+              { label: "IPFS CID", value: ipfsCID ? formatShortHash(ipfsCID, 8) : "Pending", color: "#00ff88" },
+            ].map((item) => (
+              <div key={item.label} style={{ background: "#0b1118", border: "1px solid #141c27", borderRadius: "12px", padding: "12px" }}>
+                <div style={{ fontSize: "10px", color: "#516174", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>{item.label}</div>
+                <div style={{ fontSize: "13px", color: item.color, fontWeight: 700 }}>{item.value}</div>
+              </div>
+            ))}
+          </div>
           <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "2px", color: "#444", marginBottom: "12px" }}>Portfolio Value</div>
           <div style={{ fontSize: "52px", fontWeight: 900, letterSpacing: "-3px", color: "white", marginBottom: "12px", transition: "all 0.5s ease", fontVariantNumeric: "tabular-nums" }}>
             ${displayValue.toFixed(2)}
@@ -301,12 +308,13 @@ export default function DashboardPage() {
         <div style={{ background: "#0f0f0f", border: "1px solid #1a1a1a", borderRadius: "20px", padding: "20px", marginBottom: "12px" }}>
           <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "2px", color: "#444", marginBottom: "14px" }}>Autopilot Activity</div>
           {[
-            { dot: "#00d4ff", event: "Vault deployed on Flow Testnet", time: new Date(vault.created_at).toLocaleString(), link: txHash ? { href: "https://testnet.flowscan.io/account/0xf8105fdaa45bc140", label: "0xf8105fdaa45bc140 ↗", color: "#00d4ff" } : null },
-            { dot: "#00ff88", event: "Strategy stored on IPFS", time: new Date(vault.created_at).toLocaleString(), link: ipfsCID ? { href: "https://ipfs.io/ipfs/" + ipfsCID, label: ipfsCID.slice(0, 14) + "... ↗", color: "#00ff88" } : null },
+            { dot: "#00d4ff", event: "Vault deployed on Flow Testnet", time: new Date(vault.created_at).toLocaleString(), link: txHash ? { href: "https://testnet.flowscan.io/transaction/" + txHash, label: `${formatShortHash(txHash, 8)} ↗`, color: "#00d4ff" } : null },
+            { dot: "#00ff88", event: "Strategy stored on IPFS", time: ipfsProvider ? `Real CID via ${ipfsProvider}` : new Date(vault.created_at).toLocaleString(), link: ipfsCID ? { href: getIpfsLink(ipfsCID, ipfsUrl), label: `${formatShortHash(ipfsCID, 8)} ↗`, color: "#00ff88" } : null },
+            { dot: "#d7ff85", event: "Child account linked", time: childAddress ? "Walletless · Gas sponsored by FlowPilot" : "Pending", link: childAddress ? { href: `https://testnet.flowscan.io/account/${childAddress}`, label: `${formatShortHash(childAddress, 6)} ↗`, color: "#d7ff85" } : null },
             { dot: "#444", event: "Autopilot rebalancing every " + vault.strategy.rebalance_frequency_days + " days", time: "Scheduled" },
             { dot: "#444", event: "Weekly performance email digest", time: "Scheduled" },
           ].map((item, i) => (
-            <div key={i} style={{ display: "flex", gap: "12px", marginBottom: "12px", paddingBottom: "12px", borderBottom: i < 3 ? "1px solid #111" : "none" }}>
+            <div key={i} style={{ display: "flex", gap: "12px", marginBottom: "12px", paddingBottom: "12px", borderBottom: i < 4 ? "1px solid #111" : "none" }}>
               <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: item.dot, marginTop: "5px", flexShrink: 0 }} />
               <div>
                 <div style={{ fontSize: "13px", color: "white", marginBottom: "2px" }}>{item.event}</div>
@@ -326,9 +334,14 @@ export default function DashboardPage() {
           <a href="https://testnet.flowscan.io/account/0xf8105fdaa45bc140" target="_blank" rel="noreferrer" style={{ display: "block", fontSize: "12px", color: "#00d4ff", textDecoration: "none", fontFamily: "monospace", marginBottom: "6px" }}>
             Contract: 0xf8105fdaa45bc140 ↗
           </a>
+          {childAddress && (
+            <a href={`https://testnet.flowscan.io/account/${childAddress}`} target="_blank" rel="noreferrer" style={{ display: "block", fontSize: "12px", color: "#d7ff85", textDecoration: "none", fontFamily: "monospace", marginBottom: "6px" }}>
+              Child Account: {formatShortHash(childAddress, 6)} ↗
+            </a>
+          )}
           {ipfsCID && (
-            <a href={"https://ipfs.io/ipfs/" + ipfsCID} target="_blank" rel="noreferrer" style={{ display: "block", fontSize: "12px", color: "#00ff88", textDecoration: "none", fontFamily: "monospace", marginBottom: "8px" }}>
-              IPFS: {ipfsCID.slice(0, 24)}... ↗
+            <a href={getIpfsLink(ipfsCID, ipfsUrl)} target="_blank" rel="noreferrer" style={{ display: "block", fontSize: "12px", color: "#00ff88", textDecoration: "none", fontFamily: "monospace", marginBottom: "8px" }}>
+              IPFS: {formatShortHash(ipfsCID, 12)} ↗
             </a>
           )}
           {ipfsCID && (
@@ -408,7 +421,7 @@ export default function DashboardPage() {
             Get Attestation
           </button>
           <button onClick={() => router.push("/judge")} style={{ padding: "14px", borderRadius: "12px", fontWeight: 600, fontSize: "13px", border: "1px solid #2a321b", background: "#11140d", color: "#d7ff85", cursor: "pointer", fontFamily: "inherit" }}>
-            Judge Mode
+            Verification View
           </button>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "24px" }}>

@@ -7,6 +7,9 @@ export default function HomePage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
+  const [onboarding, setOnboarding] = useState(false);
+  const [onboarded, setOnboarded] = useState<any>(null);
+  const [onboardError, setOnboardError] = useState("");
   const router = useRouter();
 
   const examples = [
@@ -15,6 +18,41 @@ export default function HomePage() {
     "Put $1000 to work. Never lose more than 5%.",
     "Save $300 and grow it steadily over a year.",
   ];
+
+  const handleEmailBlur = async () => {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized || !normalized.includes("@")) return;
+    if (onboarding) return;
+    if (onboarded?.email === normalized) return;
+
+    setFocused(null);
+    setOnboarding(true);
+    setOnboardError("");
+
+    try {
+      const res = await fetch("/api/onboard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalized }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Onboarding failed");
+      }
+
+      const next = { ...data, email: normalized };
+      setOnboarded(next);
+      localStorage.setItem("fp_child_address", data.childAddress || "");
+      localStorage.setItem("fp_onboard_tx_hash", data.accountTxHash || "");
+      localStorage.setItem("fp_onboard_flowscan_url", data.flowscanUrl || "");
+    } catch (error) {
+      setOnboarded(null);
+      setOnboardError(error instanceof Error ? error.message : "Onboarding failed");
+    } finally {
+      setOnboarding(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!intent.trim() || !email.trim()) return;
@@ -30,6 +68,9 @@ export default function HomePage() {
         localStorage.setItem("fp_strategy", JSON.stringify(data.strategy));
         localStorage.setItem("fp_intent", intent);
         localStorage.setItem("fp_email", email);
+        if (onboarded?.childAddress) {
+          localStorage.setItem("fp_child_address", onboarded.childAddress);
+        }
         router.push("/confirm");
       } else {
         alert("Could not parse your goal. Try rephrasing.");
@@ -115,7 +156,7 @@ export default function HomePage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onFocus={() => setFocused("email")}
-              onBlur={() => setFocused(null)}
+              onBlur={handleEmailBlur}
               type="email"
               placeholder="you@example.com"
               style={{
@@ -132,6 +173,22 @@ export default function HomePage() {
                 boxSizing: "border-box" as const,
               }}
             />
+            {onboarding && (
+              <div style={{ marginTop: "10px", fontSize: "12px", color: "#98e7ff", display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#00d4ff", boxShadow: "0 0 10px rgba(0,212,255,0.8)" }} />
+                Creating your Flow child account...
+              </div>
+            )}
+            {onboarded?.childAddress && !onboarding && (
+              <div style={{ marginTop: "10px", padding: "10px 12px", borderRadius: "12px", background: "#08140d", border: "1px solid #143020", color: "#8fffbf", fontSize: "12px", lineHeight: 1.6 }}>
+                Child account ready: {onboarded.childAddress.slice(0, 12)}... Gas sponsored
+              </div>
+            )}
+            {onboardError && !onboarding && (
+              <div style={{ marginTop: "10px", fontSize: "12px", color: "#ff8d8d" }}>
+                {onboardError}
+              </div>
+            )}
           </div>
 
           <button
@@ -243,6 +300,24 @@ export default function HomePage() {
               <div style={{ fontSize: "11px", color: "#444", textTransform: "uppercase" as const, letterSpacing: "1px" }}>{item.label}</div>
             </div>
           ))}
+        </div>
+
+        <div style={{ background: "#0c1016", border: "1px solid #182536", borderRadius: "20px", padding: "20px", marginBottom: "56px" }}>
+          <div style={{ fontSize: "11px", textTransform: "uppercase" as const, letterSpacing: "2px", color: "#5f748d", marginBottom: "14px" }}>
+            Verification Surface
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
+            {[
+              { label: "Walletless", value: "Child account provisioning on email blur" },
+              { label: "Execution", value: "Flow testnet vault + scheduler proof links" },
+              { label: "Storage", value: "Real content-addressed IPFS strategy payloads" },
+            ].map((item) => (
+              <div key={item.label} style={{ background: "#101722", border: "1px solid #162131", borderRadius: "14px", padding: "14px" }}>
+                <div style={{ fontSize: "11px", color: "#70859c", marginBottom: "6px" }}>{item.label}</div>
+                <div style={{ fontSize: "13px", color: "white", lineHeight: 1.5 }}>{item.value}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Tech stack */}

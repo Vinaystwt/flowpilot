@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { formatShortHash, getConvictionScore, getIpfsLink, getScenarioPreview } from "@/lib/vault-presentation";
 
 export default function JudgePage() {
   const [vault, setVault] = useState<any>(null);
@@ -8,6 +9,8 @@ export default function JudgePage() {
   const [archiveCID, setArchiveCID] = useState("");
   const [archiveUrl, setArchiveUrl] = useState("");
   const [lighthouseCID, setLighthouseCID] = useState("");
+  const [childAddress, setChildAddress] = useState("");
+  const [ipfsUrl, setIpfsUrl] = useState("");
   const [archiving, setArchiving] = useState(false);
   const [archiveError, setArchiveError] = useState("");
   const router = useRouter();
@@ -23,6 +26,8 @@ export default function JudgePage() {
       setArchiveCID(localStorage.getItem("fp_archive_cid") || "");
       setArchiveUrl(localStorage.getItem("fp_archive_url") || "");
       setLighthouseCID(localStorage.getItem("fp_lighthouse_cid") || "");
+      setChildAddress(localStorage.getItem("fp_child_address") || "");
+      setIpfsUrl(localStorage.getItem("fp_ipfs_url") || "");
 
       const { createClient } = await import("@supabase/supabase-js");
       const supabase = createClient(
@@ -56,8 +61,6 @@ export default function JudgePage() {
       100
     );
     const daysLive = Math.max(1, Math.floor((Date.now() - new Date(vault.created_at).getTime()) / (1000 * 60 * 60 * 24)));
-    const upsideMultiplier = vault.strategy.strategy_type === "growth" ? 1.55 : vault.strategy.strategy_type === "balanced" ? 1.35 : 1.15;
-
     return {
       txHash,
       ipfsCID,
@@ -65,26 +68,13 @@ export default function JudgePage() {
       gainPct,
       progressPct,
       daysLive,
-      scenarios: [
-        {
-          label: "Protected downside",
-          returnPct: vault.strategy.exit_threshold_pct,
-          value: vault.principal_usd * (1 + vault.strategy.exit_threshold_pct / 100),
-          color: "#ff4466",
-        },
-        {
-          label: "Base plan",
-          returnPct: vault.strategy.target_return_pct,
-          value: vault.principal_usd * (1 + vault.strategy.target_return_pct / 100),
-          color: "#00d4ff",
-        },
-        {
-          label: "Upside path",
-          returnPct: Number((vault.strategy.target_return_pct * upsideMultiplier).toFixed(2)),
-          value: vault.principal_usd * (1 + (vault.strategy.target_return_pct * upsideMultiplier) / 100),
-          color: "#00ff88",
-        },
-      ],
+      convictionScore: getConvictionScore(vault),
+      scenarios: getScenarioPreview(vault.strategy, vault.principal_usd).map((scenario, index) => ({
+        label: index === 0 ? "Protected downside" : index === 1 ? "Base plan" : "Upside path",
+        returnPct: scenario.returnPct,
+        value: scenario.terminalValue,
+        color: scenario.color,
+      })),
     };
   }, [vault]);
 
@@ -134,9 +124,9 @@ export default function JudgePage() {
       <div style={{ maxWidth: "760px", margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "28px" }}>
           <div>
-            <div style={{ fontSize: "24px", fontWeight: 900, color: "#d7ff85", letterSpacing: "-1px" }}>FlowPilot Judge Mode</div>
+            <div style={{ fontSize: "24px", fontWeight: 900, color: "#d7ff85", letterSpacing: "-1px" }}>FlowPilot Verification View</div>
             <div style={{ fontSize: "13px", color: "#6e7786", marginTop: "4px" }}>
-              Walletless Flow vaults with real IPFS strategy storage and a verifiable evidence trail.
+              Walletless Flow vaults with real IPFS strategy storage and a compact verification trail for reviewers.
             </div>
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
@@ -178,18 +168,23 @@ export default function JudgePage() {
                 </a>
               )}
               {metrics.ipfsCID && (
-                <a href={"https://storacha.link/ipfs/" + metrics.ipfsCID} target="_blank" rel="noreferrer" style={{ fontFamily: "monospace", fontSize: "12px", color: "#00ff88", textDecoration: "none" }}>
-                  Strategy CID: {metrics.ipfsCID.slice(0, 24)}... ↗
+                <a href={getIpfsLink(metrics.ipfsCID, ipfsUrl)} target="_blank" rel="noreferrer" style={{ fontFamily: "monospace", fontSize: "12px", color: "#00ff88", textDecoration: "none" }}>
+                  Strategy CID: {formatShortHash(metrics.ipfsCID, 12)} ↗
+                </a>
+              )}
+              {childAddress && (
+                <a href={`https://testnet.flowscan.io/account/${childAddress}`} target="_blank" rel="noreferrer" style={{ fontFamily: "monospace", fontSize: "12px", color: "#d7ff85", textDecoration: "none" }}>
+                  Child account: {formatShortHash(childAddress, 6)} ↗
                 </a>
               )}
               {archiveUrl && (
                 <a href={archiveUrl} target="_blank" rel="noreferrer" style={{ fontFamily: "monospace", fontSize: "12px", color: "#d7ff85", textDecoration: "none" }}>
-                  Evidence pack: {archiveCID.slice(0, 24)}... ↗
+                  Evidence pack: {formatShortHash(archiveCID, 12)} ↗
                 </a>
               )}
               {lighthouseCID && (
                 <a href={"https://gateway.lighthouse.storage/ipfs/" + lighthouseCID} target="_blank" rel="noreferrer" style={{ fontFamily: "monospace", fontSize: "12px", color: "#ef9f27", textDecoration: "none" }}>
-                  Lighthouse mirror: {lighthouseCID.slice(0, 24)}... ↗
+                  Lighthouse mirror: {formatShortHash(lighthouseCID, 12)} ↗
                 </a>
               )}
             </div>
@@ -205,6 +200,9 @@ export default function JudgePage() {
             </div>
             <div style={{ fontSize: "12px", color: "#98a37c" }}>
               ${vault.principal_usd} principal · {metrics.daysLive} day live runtime
+            </div>
+            <div style={{ marginTop: "10px", fontSize: "12px", color: "#d7ff85" }}>
+              Conviction score: {metrics.convictionScore}/100
             </div>
           </div>
         </div>

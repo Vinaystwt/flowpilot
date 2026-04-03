@@ -2,11 +2,13 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getIpfsLink } from "@/lib/vault-presentation";
 
 export default function AttestationPage() {
   const [vault, setVault] = useState<any>(null);
   const [attestation, setAttestation] = useState<any>(null);
   const [attestationCID, setAttestationCID] = useState("");
+  const [attestationUrl, setAttestationUrl] = useState("");
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated] = useState(false);
   const router = useRouter();
@@ -44,6 +46,7 @@ export default function AttestationPage() {
       if (data.success) {
         setAttestation(data.attestation);
         setAttestationCID(data.attestationCID);
+        setAttestationUrl(data.ipfsUrl || "");
         setGenerated(true);
       }
     } catch {
@@ -112,7 +115,7 @@ export default function AttestationPage() {
               </div>
             )}
             {attestationCID && (
-              <a href={"https://ipfs.io/ipfs/" + attestationCID} target="_blank" rel="noreferrer" style={{ display: "block", padding: "12px", background: "#111", borderRadius: "10px", textDecoration: "none", fontFamily: "monospace", fontSize: "12px", color: "#a78bfa", wordBreak: "break-all" }}>
+              <a href={getIpfsLink(attestationCID, attestationUrl)} target="_blank" rel="noreferrer" style={{ display: "block", padding: "12px", background: "#111", borderRadius: "10px", textDecoration: "none", fontFamily: "monospace", fontSize: "12px", color: "#a78bfa", wordBreak: "break-all" }}>
                 {"ipfs://" + attestationCID}
               </a>
             )}

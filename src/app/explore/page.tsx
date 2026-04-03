@@ -1,11 +1,14 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { formatShortHash, getConvictionScore, getIpfsLink } from "@/lib/vault-presentation";
 
 export default function ExplorePage() {
   const [vaults, setVaults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, totalValue: 0, avgReturn: 0 });
+  const [strategyFilter, setStrategyFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
   const router = useRouter();
 
   useEffect(() => {
@@ -40,6 +43,18 @@ export default function ExplorePage() {
   }, []);
 
   const strategyColors: any = { conservative: "#00ff88", balanced: "#00d4ff", growth: "#ff6644" };
+  const filteredVaults = useMemo(() => {
+    const next = vaults.filter((vault) => strategyFilter === "all" || vault.strategy.strategy_type === strategyFilter);
+    return next.sort((a, b) => {
+      if (sortBy === "conviction") {
+        return getConvictionScore(b) - getConvictionScore(a);
+      }
+      if (sortBy === "return") {
+        return (b.current_value_usd - b.principal_usd) - (a.current_value_usd - a.principal_usd);
+      }
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  }, [sortBy, strategyFilter, vaults]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#080808", padding: "32px 20px", fontFamily: "system-ui, sans-serif" }}>
@@ -71,16 +86,53 @@ export default function ExplorePage() {
           Live Vaults on Flow Testnet
         </div>
 
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "18px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            {["all", "conservative", "balanced", "growth"].map((value) => (
+              <button
+                key={value}
+                onClick={() => setStrategyFilter(value)}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: "999px",
+                  border: "1px solid " + (strategyFilter === value ? "#29425b" : "#1a1a1a"),
+                  background: strategyFilter === value ? "#0d1016" : "#0f0f0f",
+                  color: strategyFilter === value ? "#d7ff85" : "#666",
+                  cursor: "pointer",
+                  fontSize: "12px",
+                  textTransform: "capitalize",
+                  fontFamily: "inherit",
+                }}
+              >
+                {value === "all" ? "All strategies" : value}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "11px", color: "#444", textTransform: "uppercase", letterSpacing: "1px" }}>Sort</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{ background: "#0f0f0f", border: "1px solid #1a1a1a", borderRadius: "10px", color: "white", padding: "8px 10px", fontFamily: "inherit", fontSize: "12px" }}
+            >
+              <option value="newest">Newest</option>
+              <option value="conviction">Highest conviction</option>
+              <option value="return">Highest return</option>
+            </select>
+          </div>
+        </div>
+
         {loading ? (
           <div style={{ color: "#444", textAlign: "center", padding: "40px" }}>Loading vaults...</div>
-        ) : vaults.length === 0 ? (
+        ) : filteredVaults.length === 0 ? (
           <div style={{ color: "#444", textAlign: "center", padding: "40px" }}>No vaults yet. Be the first.</div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            {vaults.map((vault, i) => {
+            {filteredVaults.map((vault, i) => {
               const gain = vault.current_value_usd - vault.principal_usd;
               const gainPct = ((gain / vault.principal_usd) * 100).toFixed(3);
               const color = strategyColors[vault.strategy.strategy_type] || "#444";
+              const convictionScore = getConvictionScore(vault);
               return (
                 <div key={vault.id} style={{ background: "#0f0f0f", border: "1px solid #1a1a1a", borderRadius: "16px", padding: "16px 20px", display: "flex", alignItems: "center", gap: "16px" }}>
                   <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: color + "20", border: "1px solid " + color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, color, flexShrink: 0 }}>
@@ -91,6 +143,9 @@ export default function ExplorePage() {
                       <span style={{ fontSize: "13px", fontWeight: 700, color: "white" }}>${vault.current_value_usd.toFixed(2)}</span>
                       <span style={{ fontSize: "12px", color: gain >= 0 ? "#00ff88" : "#ff4466", fontWeight: 600 }}>+{gainPct}%</span>
                       <span style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "100px", background: color + "15", color, fontWeight: 700 }}>{vault.strategy.strategy_type}</span>
+                      {vault.ipfs_cid && (
+                        <span style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "100px", background: "#0d1711", color: "#8fffbf", fontWeight: 700 }}>CID verified</span>
+                      )}
                     </div>
                     <div style={{ display: "flex", gap: "8px" }}>
                       {vault.strategy.allocations.map((a: any) => (
@@ -101,17 +156,13 @@ export default function ExplorePage() {
                   <div style={{ textAlign: "right", flexShrink: 0 }}>
                     <div style={{ fontSize: "11px", color: "#444", marginBottom: "2px" }}>
                     Score: <span style={{ color: "#a78bfa", fontWeight: 700 }}>
-                      {Math.min(100, Math.round(
-                        ((vault.current_value_usd - vault.principal_usd) / vault.principal_usd / (vault.strategy.target_return_pct / 100)) * 60 +
-                        (vault.strategy.strategy_type === "conservative" ? 20 : vault.strategy.strategy_type === "balanced" ? 15 : 10) +
-                        Math.min(20, ((Date.now() - new Date(vault.created_at).getTime()) / (1000 * 60 * 60 * 24)) * 2)
-                      ))}
+                      {convictionScore}
                     </span>/100
                   </div>
                   <div style={{ fontSize: "11px", color: "#333" }}>{new Date(vault.created_at).toLocaleDateString()}</div>
                     {vault.ipfs_cid && (
-                      <a href={"https://ipfs.io/ipfs/" + vault.ipfs_cid} target="_blank" rel="noreferrer" style={{ fontSize: "10px", color: "#00ff88", textDecoration: "none", fontFamily: "monospace" }}>
-                        IPFS ↗
+                      <a href={getIpfsLink(vault.ipfs_cid)} target="_blank" rel="noreferrer" style={{ fontSize: "10px", color: "#00ff88", textDecoration: "none", fontFamily: "monospace" }}>
+                        {formatShortHash(vault.ipfs_cid, 7)} ↗
                       </a>
                     )}
                   </div>
