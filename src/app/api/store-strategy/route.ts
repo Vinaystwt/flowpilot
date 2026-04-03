@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { IpfsUploadError, uploadJsonToIpfs } from "@/lib/ipfs";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,71 +16,18 @@ export async function POST(req: NextRequest) {
       network: "flow-testnet",
     };
 
-    const content = JSON.stringify(payload, null, 2);
+    const result = await uploadJsonToIpfs(
+      payload,
+      `flowpilot-strategy-${Date.now()}.json`
+    );
 
-    // Try NFT.storage (most reliable free IPFS)
-    try {
-      const { NFTStorage, Blob: NFTBlob } = await import("nft.storage");
-      const client = new NFTStorage({ token: process.env.NFT_STORAGE_TOKEN || "" });
-      const blob = new NFTBlob([content], { type: "application/json" });
-      const cid = await client.storeBlob(blob);
-      if (cid) {
-        return NextResponse.json({
-          success: true,
-          cid,
-          ipfsUrl: `https://ipfs.io/ipfs/${cid}`,
-          real: true,
-          provider: "nft.storage",
-        });
-      }
-    } catch (e) {
-      console.log("NFT.storage attempt:", e);
-    }
-
-    // Try web3.storage REST API with token
-    try {
-      const formData = new FormData();
-      const blob = new Blob([content], { type: "application/json" });
-      formData.append("file", blob, `strategy-${Date.now()}.json`);
-      const res = await fetch("https://api.web3.storage/upload", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${process.env.WEB3_STORAGE_TOKEN}` },
-        body: formData,
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.cid) {
-          return NextResponse.json({
-            success: true,
-            cid: data.cid,
-            ipfsUrl: `https://ipfs.io/ipfs/${data.cid}`,
-            real: true,
-            provider: "web3.storage",
-          });
-        }
-      }
-    } catch (e) {
-      console.log("web3.storage attempt:", e);
-    }
-
-    // Deterministic fallback CID based on content hash
-    const encoder = new TextEncoder();
-    const data = encoder.encode(content);
-    let hash = 0;
-    for (let i = 0; i < data.length; i++) {
-      hash = ((hash << 5) - hash) + data[i];
-      hash |= 0;
-    }
-    const fallbackCid = `bafybeig${Math.abs(hash).toString(16).padStart(8, "0")}flowpilot${Date.now().toString(16)}`;
     return NextResponse.json({
       success: true,
-      cid: fallbackCid,
-      ipfsUrl: `https://ipfs.io/ipfs/${fallbackCid}`,
-      real: false,
-      provider: "fallback",
+      ...result,
     });
   } catch (error: unknown) {
+    const attempts = error instanceof IpfsUploadError ? error.attempts : [];
     const message = error instanceof Error ? error.message : "Storage failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message, attempts }, { status: 502 });
   }
 }

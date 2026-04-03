@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
+import { IpfsUploadError, uploadJsonToIpfs } from "@/lib/ipfs";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -65,30 +66,25 @@ Write the verdict now:`
       protocolFee: { rate: "15%", appliesTo: "gains above principal" },
     };
 
-    const content = JSON.stringify(attestation, null, 2);
-    let attestationCID = `attestation-${Date.now()}`;
-    let real = false;
-
-    // Try NFT.storage
-    try {
-      const { NFTStorage, Blob: NFTBlob } = await import("nft.storage");
-      const client = new NFTStorage({ token: process.env.NFT_STORAGE_TOKEN || "" });
-      const blob = new NFTBlob([content], { type: "application/json" });
-      const cid = await client.storeBlob(blob);
-      if (cid) { attestationCID = cid; real = true; }
-    } catch {}
+    const upload = await uploadJsonToIpfs(
+      attestation,
+      `flowpilot-attestation-${vault.id || Date.now()}.json`
+    );
 
     return NextResponse.json({
       success: true,
       attestation,
-      attestationCID,
-      ipfsUrl: `https://ipfs.io/ipfs/${attestationCID}`,
+      attestationCID: upload.cid,
+      ipfsUrl: upload.ipfsUrl,
       aiVerdict,
       convictionScore,
-      real,
+      real: upload.real,
+      provider: upload.provider,
+      attempts: upload.attempts,
     });
   } catch (error: unknown) {
+    const attempts = error instanceof IpfsUploadError ? error.attempts : [];
     const message = error instanceof Error ? error.message : "Attestation failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message, attempts }, { status: 502 });
   }
 }
