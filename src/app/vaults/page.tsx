@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { formatShortHash, getConvictionScore } from "@/lib/vault-presentation";
 
 export default function VaultsPage() {
   const [vaults, setVaults] = useState<any[]>([]);
@@ -136,6 +137,7 @@ export default function VaultsPage() {
               const gainPct = ((gain / vault.principal_usd) * 100).toFixed(3);
               const isPositive = gain >= 0;
               const color = strategyColors[vault.strategy.strategy_type] || "#444";
+              const convictionScore = getConvictionScore(vault);
 
               return (
                 <div
@@ -149,6 +151,16 @@ export default function VaultsPage() {
                     <div>
                       <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "3px 10px", borderRadius: "100px", background: `${color}15`, color, fontSize: "11px", fontWeight: 700, marginBottom: "8px" }}>
                         ● {vault.strategy.strategy_type}
+                      </div>
+                      <div style={{ display: "flex", gap: "8px", marginBottom: "8px", flexWrap: "wrap" }}>
+                        <span style={{ fontSize: "11px", padding: "3px 9px", borderRadius: "999px", background: "#101722", color: "#a78bfa", fontWeight: 700 }}>
+                          Score {convictionScore}/100
+                        </span>
+                        {vault.ipfs_cid && (
+                          <span style={{ fontSize: "11px", padding: "3px 9px", borderRadius: "999px", background: "#0d1711", color: "#8fffbf", fontWeight: 700 }}>
+                            CID {formatShortHash(vault.ipfs_cid, 6)}
+                          </span>
+                        )}
                       </div>
                       <div style={{ fontSize: "22px", fontWeight: 900, letterSpacing: "-1px", color: "white" }}>
                         ${vault.current_value_usd.toFixed(2)}

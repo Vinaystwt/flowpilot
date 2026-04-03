@@ -6,7 +6,7 @@
 
 ### Your money. On autopilot.
 
-**Natural-language DeFi autopilot on Flow** — tell it your financial goal in plain English, and FlowPilot builds, deploys, and manages your personalized strategy autonomously via Cadence smart contracts. No wallet setup. No gas fees. No complexity.
+**Natural-language DeFi autopilot on Flow** — tell it your financial goal in plain English, and FlowPilot builds, stores, and deploys a walletless strategy flow with verifiable Flow and IPFS proof surfaces. No wallet setup. No gas fees. No complexity.
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-flowpilot--puce.vercel.app-00d4ff?style=for-the-badge)](https://flowpilot-puce.vercel.app)
 [![Flow Testnet](https://img.shields.io/badge/Flow_Testnet-0xf8105fdaa45bc140-7F77DD?style=for-the-badge)](https://testnet.flowscan.io/account/0xf8105fdaa45bc140)
@@ -72,6 +72,23 @@ FlowPilot is a three-layer system:
 
 Try: type `Grow my $500 by 8% over 6 months. Keep it safe.` and watch the AI build a complete DeFi strategy, store it on IPFS, and deploy it to Flow via a real FCL transaction.
 
+Reviewer shortcut:
+- open `/judge` after creating a vault to see the compact verification view
+- open `/explore` to see public active vaults with conviction scores and CID proof links
+
+---
+
+## What Is Verifiable Today
+
+- Strategy payloads are uploaded through the shared IPFS uploader and return real CIDs
+- Vault deployment exposes Flow proof links and contract references
+- Walletless onboarding now provisions a deterministic child account flow from email input
+- Evidence packs and attestations are generated from live vault state and published with IPFS links
+
+Important note:
+- portfolio growth in the dashboard is currently a simulated accrual model based on the selected strategy target return and elapsed time
+- the proof surfaces are real; the yield line is a product simulation layer for the demo
+
 ---
 
 ## System Architecture
@@ -82,23 +99,24 @@ User (plain English goal)
 +--------------------------------------------------------------+
 |              Next.js 14 Frontend (Vercel)                    |
 |  /  .  /confirm  .  /dashboard  .  /mutate                  |
-|  /vaults  .  /attestation  .  /explore                      |
+|  /vaults  .  /attestation  .  /explore  .  /judge           |
 +----------------------+---------------------------------------+
                        |
                        v
 +--------------------------------------------------------------+
-|           API Layer - 11 Vercel Serverless Routes            |
+|           API Layer - 12 Vercel Serverless Routes            |
 |                                                              |
 |  parse-intent     store-strategy    deploy-vault             |
 |  mutate-strategy  mint-attestation  vault-health             |
 |  send-report      archive-vault     schedule-rebalance       |
-|  generate-report  get-vault                                  |
+|  generate-report  get-vault         onboard                  |
 +----+---------------+---------------+---------------+---------+
      |               |               |               |
      v               v               v               v
   Groq AI          IPFS          Flow Testnet    Supabase
- llama-3.3-70b  NFT.storage     4 Cadence       PostgreSQL
-                Lighthouse      Contracts
+ llama-3.3-70b  Storacha        4 Cadence       PostgreSQL
+                Pinata          Contracts
+                Lighthouse
                     |               |
                     v               v
                Filecoin      0xf8105fdaa45bc140
@@ -123,7 +141,10 @@ User (plain English goal)
 
 ---
 
-## Novel Features Built
+## Highest-Signal Features
+
+**Walletless Child Account Provisioning**
+Email blur on the landing page now triggers child-account onboarding so the Flow-native, gas-sponsored UX is visible before deployment. This closes a credibility gap between the product story and the actual code path.
 
 **Strategy Mutation Engine**
 Users update their DeFi strategy by typing plain English. Groq diffs old vs new and presents a side-by-side visual comparison with every changed allocation highlighted before confirming. New version uploaded to IPFS as a versioned update. No other DeFi product offers this.
@@ -139,6 +160,9 @@ Portfolio view showing capital distribution across strategy types as a live colo
 
 **Public Vault Explorer with Conviction Leaderboard**
 Live view of all active vaults with conviction scores, allocations, and IPFS links. Real protocol traction visible in real time.
+
+**Verification View**
+`/judge` is a compact reviewer-facing surface showing Flow links, CID links, child-account proof, scenario framing, and evidence-pack generation from live vault state.
 
 **IPFS Content Verification**
 Dashboard Verify IPFS button fetches actual JSON from the stored CID and previews the content inline. Proves the integration is real, not simulated.
@@ -162,6 +186,7 @@ Vault deployment triggers fcl.authenticate and fcl.mutate calling FlowPilotVault
 | `/mutate` | Strategy mutation lab with side-by-side visual diff |
 | `/attestation` | AI verdict + conviction score minted to IPFS |
 | `/explore` | Public vault explorer with conviction leaderboard |
+| `/judge` | Compact verification view for proof links, scenarios, and evidence pack |
 
 ---
 
@@ -180,6 +205,7 @@ Vault deployment triggers fcl.authenticate and fcl.mutate calling FlowPilotVault
 | `/api/schedule-rebalance` | POST | Flow on-chain rebalance scheduling |
 | `/api/archive-vault` | POST | Filecoin archival via Lighthouse |
 | `/api/get-vault` | GET | Query Flow testnet for live vault count |
+| `/api/onboard` | POST | Walletless child-account provisioning + Flow proof metadata |
 
 ---
 
@@ -187,11 +213,11 @@ Vault deployment triggers fcl.authenticate and fcl.mutate calling FlowPilotVault
 
 | Layer | Technology | Notes |
 |-------|-----------|-------|
-| Frontend | Next.js 14 App Router | 7 pages, 11 API routes |
+| Frontend | Next.js 14 App Router | 8 pages, 12 API routes |
 | Hosting | Vercel | Free tier, instant deploy |
 | Blockchain | Flow Testnet (Cadence) | 4 contracts, FCL browser tx |
 | AI | Groq llama-3.3-70b-versatile | Parsing, analysis, mutation, health |
-| IPFS | NFT.storage + web3.storage | Real CIDs, Filecoin auto-deals |
+| IPFS | Storacha + Pinata fallbacks | Real CIDs through shared uploader |
 | Filecoin | Lighthouse.storage | Free archival tier |
 | Database | Supabase PostgreSQL | Vault metadata, email queue |
 | Email | Resend | Weekly performance reports |
@@ -214,12 +240,13 @@ Vault deployment triggers fcl.authenticate and fcl.mutate calling FlowPilotVault
 - Real FCL browser transaction (fcl.authenticate + fcl.mutate) on vault deployment
 - FlowPilotScheduler for native on-chain automation
 - Walletless UX - email only, no seed phrases
+- Child-account provisioning path exposed directly in the frontend
 - Natural language as the primary interface
 - Gas-free - protocol-sponsored transaction model
 
 ### PL Fresh Code
 - Brand new codebase, zero prior deployment
-- Real IPFS via NFT.storage with automatic Filecoin deals
+- Real IPFS via shared uploader with Storacha/Pinata/Lighthouse-capable fallback paths
 - Filecoin archival via Lighthouse for vault histories
 - All strategy objects content-addressed and verifiable by CID
 - Novel NL-to-Cadence pipeline, first of its kind
@@ -257,6 +284,12 @@ cd flowpilot
 npm install
 cp .env.example .env.local
 npm run dev
+```
+
+Build check:
+
+```bash
+npm run build
 ```
 
 ### Environment Variables
