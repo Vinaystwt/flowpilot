@@ -83,7 +83,7 @@ export default function DashboardPage() {
     fetchVault();
   }, [router]);
 
-  // Live ticker — updates every 10 seconds
+  // Simulated value ticker — updates every 10 seconds
   useEffect(() => {
     if (!vault) return;
     tickerRef.current = setInterval(() => {
@@ -231,7 +231,7 @@ export default function DashboardPage() {
             <span style={{ fontSize: "20px", fontWeight: 800, color: isPositive ? "#00ff88" : "#ff4466" }}>{isPositive ? "+" : ""}{gainPct}%</span>
             <span style={{ color: "#444", fontSize: "13px" }}>{isPositive ? "+" : ""}${gain.toFixed(4)} since launch</span>
           </div>
-          <div style={{ fontSize: "11px", color: "#2a2a2a" }}>Live · updates every 10 seconds · Principal: ${vault.principal_usd}</div>
+          <div style={{ fontSize: "11px", color: "#2a2a2a" }}>Simulated live value · updates every 10 seconds · Principal: ${vault.principal_usd}</div>
         </div>
 
         <div style={{ background: "#0f0f0f", border: "1px solid #1a1a1a", borderRadius: "20px", padding: "20px", marginBottom: "12px" }}>
@@ -378,7 +378,7 @@ export default function DashboardPage() {
             ))}
           </div>
           <div style={{ fontSize: "12px", color: "#70859c", lineHeight: 1.6 }}>
-            The strongest demo angle is verifiable execution: Flow transaction proof, real IPFS strategy storage, and a judge-ready archive pack generated from live vault state.
+            The strongest demo angle is verifiable execution: Flow proof links, real IPFS strategy storage, and a judge-ready archive pack generated from current vault state.
           </div>
         </div>
 

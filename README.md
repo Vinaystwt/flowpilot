@@ -6,7 +6,7 @@
 
 ### Your money. On autopilot.
 
-**Natural-language DeFi autopilot on Flow** — tell it your financial goal in plain English, and FlowPilot builds, stores, and deploys a walletless strategy flow with verifiable Flow and IPFS proof surfaces. No wallet setup. No gas fees. No complexity.
+**Natural-language DeFi autopilot on Flow** — tell it your financial goal in plain English, and FlowPilot builds, stores, and deploys a walletless strategy flow with verifiable Flow and IPFS proof surfaces. No wallet setup. No gas fees. Lower complexity.
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-flowpilot--puce.vercel.app-00d4ff?style=for-the-badge)](https://flowpilot-puce.vercel.app)
 [![Flow Testnet](https://img.shields.io/badge/Flow_Testnet-0xf8105fdaa45bc140-7F77DD?style=for-the-badge)](https://testnet.flowscan.io/account/0xf8105fdaa45bc140)
@@ -25,7 +25,7 @@
 - Manual protocol monitoring and rebalancing
 - Deep crypto knowledge requirements
 
-Every existing solution requires either deep expertise (Yearn, Beefy) or gives up on real yield entirely (Acorns, Robinhood). **The gap: a system that accepts human financial goals and executes them autonomously, invisibly, and safely forever.**
+Every existing solution requires either deep expertise (Yearn, Beefy) or gives up on direct onchain yield workflows entirely (Acorns, Robinhood). **The gap: a system that accepts human financial goals and turns them into a simpler, more verifiable onchain workflow.**
 
 ---
 
@@ -55,8 +55,8 @@ FlowPilot is a three-layer system:
                     v
          +---------------------+
          |  EXECUTION LAYER    |
-         |  Real FCL browser   |
-         |  transaction ->     |
+         |  FCL browser tx     |
+         |  or Flow fallback   |
          |  4 Cadence contracts|
          |  on Flow Testnet    |
          |  Schedule rebalance |
@@ -70,7 +70,7 @@ FlowPilot is a three-layer system:
 
 **[flowpilot-puce.vercel.app](https://flowpilot-puce.vercel.app)**
 
-Try: type `Grow my $500 by 8% over 6 months. Keep it safe.` and watch the AI build a complete DeFi strategy, store it on IPFS, and deploy it to Flow via a real FCL transaction.
+Try: type `Grow my $500 by 8% over 6 months. Keep it safe.` and watch the AI build a complete DeFi strategy, store it on IPFS, and deploy it to Flow through the app's Flow launch path.
 
 Reviewer shortcut:
 - open `/judge` after creating a vault to see the compact verification view
@@ -83,7 +83,7 @@ Reviewer shortcut:
 - Strategy payloads are uploaded through the shared IPFS uploader and return real CIDs
 - Vault deployment exposes Flow proof links and contract references
 - Walletless onboarding now provisions a deterministic child account flow from email input
-- Evidence packs and attestations are generated from live vault state and published with IPFS links
+- Evidence packs and attestations are generated from current vault state and published with IPFS links
 
 Important note:
 - portfolio growth in the dashboard is currently a simulated accrual model based on the selected strategy target return and elapsed time
@@ -150,7 +150,7 @@ Email blur on the landing page now triggers child-account onboarding so the Flow
 Users update their DeFi strategy by typing plain English. Groq diffs old vs new and presents a side-by-side visual comparison with every changed allocation highlighted before confirming. New version uploaded to IPFS as a versioned update. No other DeFi product offers this.
 
 **Performance Attestation with Conviction Scoring**
-AI-verified vault performance record with a 0-100 conviction score minted to IPFS. Permanently verifiable proof-of-yield. A genuinely new DeFi primitive combining AI analysis with onchain storage proofs.
+AI-generated vault performance record with a 0-100 conviction score minted to IPFS. Verifiable proof packaging for a vault snapshot, combined with AI analysis and onchain storage references.
 
 **Vault Health Score**
 AI-computed 0-100 health metric on the dashboard. Factors: return progress, pace vs horizon, concentration risk, stability. Groq generates a one-sentence plain-English explanation.
@@ -159,19 +159,19 @@ AI-computed 0-100 health metric on the dashboard. Factors: return progress, pace
 Portfolio view showing capital distribution across strategy types as a live color-coded heat bar with aggregate value and total gain/loss.
 
 **Public Vault Explorer with Conviction Leaderboard**
-Live view of all active vaults with conviction scores, allocations, and IPFS links. Real protocol traction visible in real time.
+Live view of active vault records with conviction scores, allocations, and IPFS links. Useful as a public proof and discovery surface.
 
 **Verification View**
 `/judge` is a compact reviewer-facing surface showing Flow links, CID links, child-account proof, scenario framing, and evidence-pack generation from live vault state.
 
 **IPFS Content Verification**
-Dashboard Verify IPFS button fetches actual JSON from the stored CID and previews the content inline. Proves the integration is real, not simulated.
+Dashboard Verify IPFS button fetches actual JSON from the stored CID and previews the content inline. It demonstrates that the storage integration is real even when portfolio performance is simulated.
 
-**Live Value Ticker**
-Dashboard portfolio value updates every 10 seconds with smooth transitions. Autopilot yield accruing visibly in real time.
+**Simulated Value Ticker**
+Dashboard portfolio value updates every 10 seconds with smooth transitions. This is a demo simulation layer based on target return and elapsed time.
 
-**Real FCL Browser Transaction**
-Vault deployment triggers fcl.authenticate and fcl.mutate calling FlowPilotVault.createVault and FlowPilotRegistry.registerVault on Flow Testnet. Real Flowscan tx hash displayed in activity feed.
+**Flow Launch Path**
+Vault deployment attempts `fcl.authenticate` and `fcl.mutate` on Flow Testnet, and falls back to Flow proof metadata when direct browser signing is unavailable.
 
 ---
 
@@ -180,8 +180,8 @@ Vault deployment triggers fcl.authenticate and fcl.mutate calling FlowPilotVault
 | Route | Description |
 |-------|-------------|
 | `/` | Landing - NL goal input, how-it-works, tech stack |
-| `/confirm` | Strategy review + real FCL browser transaction to Flow |
-| `/dashboard` | Live portfolio: health score, AI analysis, ticker, activity feed |
+| `/confirm` | Strategy review + Flow launch path with proof details |
+| `/dashboard` | Portfolio view: health score, AI analysis, simulated ticker, activity feed |
 | `/vaults` | Multi-vault portfolio with aggregate view and risk heatmap |
 | `/mutate` | Strategy mutation lab with side-by-side visual diff |
 | `/attestation` | AI verdict + conviction score minted to IPFS |
@@ -215,7 +215,7 @@ Vault deployment triggers fcl.authenticate and fcl.mutate calling FlowPilotVault
 |-------|-----------|-------|
 | Frontend | Next.js 14 App Router | 8 pages, 12 API routes |
 | Hosting | Vercel | Free tier, instant deploy |
-| Blockchain | Flow Testnet (Cadence) | 4 contracts, FCL browser tx |
+| Blockchain | Flow Testnet (Cadence) | 4 contracts, FCL launch path + proof links |
 | AI | Groq llama-3.3-70b-versatile | Parsing, analysis, mutation, health |
 | IPFS | Storacha + Pinata fallbacks | Real CIDs through shared uploader |
 | Filecoin | Lighthouse.storage | Free archival tier |
@@ -237,7 +237,7 @@ Vault deployment triggers fcl.authenticate and fcl.mutate calling FlowPilotVault
 
 ### Flow Blockchain
 - 4 Cadence contracts deployed and live on Flow Testnet
-- Real FCL browser transaction (fcl.authenticate + fcl.mutate) on vault deployment
+- Flow launch path with direct FCL attempt plus fallback proof metadata
 - FlowPilotScheduler for native on-chain automation
 - Walletless UX - email only, no seed phrases
 - Child-account provisioning path exposed directly in the frontend
@@ -269,7 +269,7 @@ Vault deployment triggers fcl.authenticate and fcl.mutate calling FlowPilotVault
 
 | Stream | Mechanism | Status |
 |--------|-----------|--------|
-| Performance fee | 15% of gains above principal | Live - FlowPilotFeeCollector on-chain |
+| Performance fee | 15% of gains above principal | Contract scaffolding in place |
 | Premium tier | $9/month advanced strategies | Planned |
 | B2B API | White-label NL vault for fintech | Planned |
 

@@ -283,9 +283,9 @@ export default function ConfirmPage() {
         <div style={{ background: "#0a0a14", border: "1px solid #1a1a2a", borderRadius: "12px", padding: "14px", marginBottom: "24px" }}>
           <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "2px", color: "#444", marginBottom: "10px" }}>What happens when you launch</div>
           {[
-            { icon: "📦", text: "Strategy uploaded to IPFS — content-addressed, permanent" },
-            { icon: "⛓", text: "Real transaction submitted to Flow Testnet" },
-            { icon: "🪪", text: "Child account linked — walletless, gas-free forever" },
+            { icon: "📦", text: "Strategy uploaded to IPFS — content-addressed and verifiable" },
+            { icon: "⛓", text: "Flow transaction submitted, or Flow fallback proof recorded" },
+            { icon: "🪪", text: "Child account linked — walletless and gas-sponsored" },
             { icon: "🤖", text: "Rebalance schedule created on FlowPilotScheduler" },
             { icon: "📧", text: "Weekly performance reports to your email" },
           ].map((item) => (

@@ -101,7 +101,7 @@ export default function AttestationPage() {
           <div style={{ background: "#0a0a14", border: "1px solid #1a1a2a", borderRadius: "20px", padding: "28px", textAlign: "center", marginBottom: "16px" }}>
             <div style={{ fontSize: "48px", marginBottom: "16px" }}>🏅</div>
             <div style={{ fontSize: "18px", fontWeight: 700, color: "white", marginBottom: "8px" }}>Generate Performance Attestation</div>
-            <div style={{ fontSize: "14px", color: "#555", marginBottom: "24px", lineHeight: 1.6 }}>AI-verified performance record stored permanently on IPFS.</div>
+            <div style={{ fontSize: "14px", color: "#555", marginBottom: "24px", lineHeight: 1.6 }}>AI-generated performance summary packaged as a verifiable IPFS attestation.</div>
             <button onClick={generateAttestation} disabled={generating} style={{ padding: "14px 32px", borderRadius: "12px", fontWeight: 700, fontSize: "14px", border: "none", cursor: generating ? "not-allowed" : "pointer", background: generating ? "#1a1a2a" : "linear-gradient(135deg, #a78bfa, #00d4ff)", color: generating ? "#555" : "#000", fontFamily: "inherit" }}>
               {generating ? "Generating..." : "Mint Attestation"}
             </button>

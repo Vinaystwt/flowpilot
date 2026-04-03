@@ -126,7 +126,7 @@ export default function JudgePage() {
           <div>
             <div style={{ fontSize: "24px", fontWeight: 900, color: "#d7ff85", letterSpacing: "-1px" }}>FlowPilot Verification View</div>
             <div style={{ fontSize: "13px", color: "#6e7786", marginTop: "4px" }}>
-              Walletless Flow vaults with real IPFS strategy storage and a compact verification trail for reviewers.
+              Walletless Flow vault flows with real IPFS strategy storage and a compact verification trail for reviewers.
             </div>
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
@@ -144,7 +144,7 @@ export default function JudgePage() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
             {[
               { label: "Walletless UX", value: "No wallet required for the user journey" },
-              { label: "Flow Execution", value: metrics.txHash ? "Real Flow testnet transaction proof" : "Flow fallback proof recorded" },
+              { label: "Flow Execution", value: metrics.txHash ? "Flow testnet tx or fallback proof available" : "Flow fallback proof recorded" },
               { label: "Verifiable Storage", value: metrics.ipfsCID ? "Real content-addressed strategy CID" : "Strategy proof pending" },
             ].map((item) => (
               <div key={item.label} style={{ background: "rgba(9,14,20,0.72)", border: "1px solid #1a2433", borderRadius: "16px", padding: "14px" }}>
@@ -157,7 +157,7 @@ export default function JudgePage() {
 
         <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "14px", marginBottom: "14px" }}>
           <div style={{ background: "#0f131b", border: "1px solid #1a2433", borderRadius: "20px", padding: "20px" }}>
-            <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "2px", color: "#7f93ab", marginBottom: "12px" }}>Live Proof Links</div>
+          <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "2px", color: "#7f93ab", marginBottom: "12px" }}>Verification Links</div>
             <div style={{ display: "grid", gap: "8px" }}>
               <a href="https://testnet.flowscan.io/account/0xf8105fdaa45bc140" target="_blank" rel="noreferrer" style={{ fontFamily: "monospace", fontSize: "12px", color: "#00d4ff", textDecoration: "none" }}>
                 Flow contract ↗
@@ -253,7 +253,7 @@ export default function JudgePage() {
           <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "2px", color: "#7b8759", marginBottom: "12px" }}>Evidence Timeline</div>
           <div style={{ display: "grid", gap: "10px" }}>
             {[
-              `Vault deployed on Flow Testnet with real execution proof`,
+              `Vault deployment recorded with Flow transaction or fallback proof`,
               `Strategy stored as a content-addressed document on IPFS`,
               `Autopilot schedule created for every ${vault.strategy.rebalance_frequency_days} days`,
               archiveUrl ? "Judge evidence pack generated and pinned" : "Judge evidence pack ready to mint",

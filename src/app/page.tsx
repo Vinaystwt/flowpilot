@@ -113,7 +113,7 @@ export default function HomePage() {
         </h1>
 
         <p style={{ fontSize: "18px", color: "#666", lineHeight: 1.7, maxWidth: "560px", margin: "0 0 56px 0" }}>
-          Type what you want in plain English. FlowPilot builds a personalized DeFi strategy and runs it autonomously on Flow — no wallet, no gas, no complexity.
+          Type what you want in plain English. FlowPilot builds a personalized strategy, stores it on IPFS, and launches the Flow proof flow with a walletless onboarding experience.
         </p>
 
         {/* Main input card */}
