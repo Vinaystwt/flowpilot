@@ -16,6 +16,11 @@ export default function DashboardPage() {
   const [verifying, setVerifying] = useState(false);
   const [displayValue, setDisplayValue] = useState(0);
   const [schedule, setSchedule] = useState<any>(null);
+  const [archiveCID, setArchiveCID] = useState("");
+  const [archiveUrl, setArchiveUrl] = useState("");
+  const [lighthouseCID, setLighthouseCID] = useState("");
+  const [archiving, setArchiving] = useState(false);
+  const [archiveError, setArchiveError] = useState("");
   const tickerRef = useRef<any>(null);
   const router = useRouter();
 
@@ -24,8 +29,14 @@ export default function DashboardPage() {
       const vaultId = localStorage.getItem("fp_vault_id");
       const tx = localStorage.getItem("fp_tx_hash") || "";
       const cid = localStorage.getItem("fp_ipfs_cid") || "";
+      const archiveLink = localStorage.getItem("fp_archive_url") || "";
+      const archiveProof = localStorage.getItem("fp_archive_cid") || "";
+      const lighthouseProof = localStorage.getItem("fp_lighthouse_cid") || "";
       setTxHash(tx);
       setIpfsCID(cid);
+      setArchiveUrl(archiveLink);
+      setArchiveCID(archiveProof);
+      setLighthouseCID(lighthouseProof);
       if (!vaultId) { router.push("/"); return; }
 
       const { createClient } = await import("@supabase/supabase-js");
@@ -120,6 +131,37 @@ export default function DashboardPage() {
     }
   };
 
+  const createEvidencePack = async () => {
+    if (!vault || archiving) return;
+    setArchiving(true);
+    setArchiveError("");
+    try {
+      const res = await fetch("/api/archive-vault", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vault,
+          finalReport: aiReport || `FlowPilot archived this vault after ${gainPct}% simulated progress.`,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Evidence pack generation failed.");
+      }
+
+      setArchiveCID(data.archiveCID || "");
+      setArchiveUrl(data.archiveUrl || "");
+      setLighthouseCID(data.lighthouseCID || "");
+      localStorage.setItem("fp_archive_cid", data.archiveCID || "");
+      localStorage.setItem("fp_archive_url", data.archiveUrl || "");
+      localStorage.setItem("fp_lighthouse_cid", data.lighthouseCID || "");
+    } catch (error) {
+      setArchiveError(error instanceof Error ? error.message : "Evidence pack generation failed.");
+    } finally {
+      setArchiving(false);
+    }
+  };
+
   if (loading) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#080808" }}>
       <div style={{ color: "#00d4ff" }}>Loading...</div>
@@ -131,6 +173,28 @@ export default function DashboardPage() {
   const gainPct = ((gain / vault.principal_usd) * 100).toFixed(4);
   const isPositive = gain >= 0;
   const progressPct = Math.min(((displayValue / vault.principal_usd - 1) / (vault.strategy.target_return_pct / 100)) * 100, 100).toFixed(1);
+  const daysLive = Math.max(1, Math.floor((Date.now() - new Date(vault.created_at).getTime()) / (1000 * 60 * 60 * 24)));
+  const scenarioMultiplier = vault.strategy.strategy_type === "growth" ? 1.55 : vault.strategy.strategy_type === "balanced" ? 1.35 : 1.15;
+  const scenarios = [
+    {
+      label: "Protected",
+      returnPct: vault.strategy.exit_threshold_pct,
+      value: vault.principal_usd * (1 + vault.strategy.exit_threshold_pct / 100),
+      color: "#ff4466",
+    },
+    {
+      label: "Base",
+      returnPct: vault.strategy.target_return_pct,
+      value: vault.principal_usd * (1 + vault.strategy.target_return_pct / 100),
+      color: "#00d4ff",
+    },
+    {
+      label: "Upside",
+      returnPct: Number((vault.strategy.target_return_pct * scenarioMultiplier).toFixed(2)),
+      value: vault.principal_usd * (1 + (vault.strategy.target_return_pct * scenarioMultiplier) / 100),
+      color: "#00ff88",
+    },
+  ];
 
   return (
     <div style={{ minHeight: "100vh", background: "#080808", padding: "32px 20px", fontFamily: "system-ui, sans-serif" }}>
@@ -282,6 +346,55 @@ export default function DashboardPage() {
           )}
         </div>
 
+        <div style={{ background: "#0d1016", border: "1px solid #1a2433", borderRadius: "16px", padding: "16px", marginBottom: "12px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+            <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "2px", color: "#5f748d" }}>Judge Snapshot</div>
+            <div style={{ fontSize: "11px", color: "#9cb0c6" }}>{daysLive}d live</div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "12px" }}>
+            {scenarios.map((scenario) => (
+              <div key={scenario.label} style={{ background: "#101722", border: "1px solid #162131", borderRadius: "12px", padding: "12px" }}>
+                <div style={{ fontSize: "11px", color: "#70859c", marginBottom: "6px" }}>{scenario.label}</div>
+                <div style={{ fontSize: "18px", fontWeight: 800, color: "white", marginBottom: "4px" }}>
+                  ${scenario.value.toFixed(2)}
+                </div>
+                <div style={{ fontSize: "12px", color: scenario.color }}>
+                  {scenario.returnPct >= 0 ? "+" : ""}{scenario.returnPct}%
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: "12px", color: "#70859c", lineHeight: 1.6 }}>
+            The strongest demo angle is verifiable execution: Flow transaction proof, real IPFS strategy storage, and a judge-ready archive pack generated from live vault state.
+          </div>
+        </div>
+
+        <div style={{ background: "#11140d", border: "1px solid #2a321b", borderRadius: "16px", padding: "16px", marginBottom: "16px" }}>
+          <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "2px", color: "#7b8759", marginBottom: "10px" }}>Execution Evidence</div>
+          <div style={{ fontSize: "13px", color: "#c7d1a9", lineHeight: 1.6, marginBottom: "12px" }}>
+            Create a judge-facing archive pack with the vault state, performance, Flow contract reference, and IPFS proof links.
+          </div>
+          {archiveUrl ? (
+            <div style={{ display: "grid", gap: "8px" }}>
+              <a href={archiveUrl} target="_blank" rel="noreferrer" style={{ fontSize: "12px", color: "#d7ff85", textDecoration: "none", fontFamily: "monospace" }}>
+                Archive Pack: {archiveCID.slice(0, 24)}... ↗
+              </a>
+              {lighthouseCID && (
+                <a href={"https://gateway.lighthouse.storage/ipfs/" + lighthouseCID} target="_blank" rel="noreferrer" style={{ fontSize: "12px", color: "#9fd0ff", textDecoration: "none", fontFamily: "monospace" }}>
+                  Lighthouse Mirror: {lighthouseCID.slice(0, 24)}... ↗
+                </a>
+              )}
+            </div>
+          ) : (
+            <button onClick={createEvidencePack} disabled={archiving} style={{ padding: "12px 14px", borderRadius: "10px", fontWeight: 700, fontSize: "12px", border: "1px solid #435125", background: archiving ? "#171c10" : "#181f10", color: archiving ? "#647049" : "#d7ff85", cursor: archiving ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+              {archiving ? "Building evidence pack..." : "Create Evidence Pack"}
+            </button>
+          )}
+          {archiveError && (
+            <div style={{ marginTop: "10px", fontSize: "11px", color: "#ff9f7a" }}>{archiveError}</div>
+          )}
+        </div>
+
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
           <button onClick={sendReport} disabled={sending} style={{ padding: "14px", borderRadius: "12px", fontWeight: 600, fontSize: "13px", border: "1px solid " + (reportSent ? "#00ff88" : "#1a1a1a"), background: reportSent ? "#00ff8812" : "#0f0f0f", color: reportSent ? "#00ff88" : "white", cursor: sending ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
             {sending ? "Sending..." : reportSent ? "Sent!" : "Email Report"}
@@ -293,6 +406,14 @@ export default function DashboardPage() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "24px" }}>
           <button onClick={() => router.push("/attestation")} style={{ padding: "14px", borderRadius: "12px", fontWeight: 600, fontSize: "13px", border: "1px solid #1a1a2a", background: "#0a0a14", color: "#a78bfa", cursor: "pointer", fontFamily: "inherit" }}>
             Get Attestation
+          </button>
+          <button onClick={() => router.push("/judge")} style={{ padding: "14px", borderRadius: "12px", fontWeight: 600, fontSize: "13px", border: "1px solid #2a321b", background: "#11140d", color: "#d7ff85", cursor: "pointer", fontFamily: "inherit" }}>
+            Judge Mode
+          </button>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "24px" }}>
+          <button onClick={createEvidencePack} disabled={archiving} style={{ padding: "14px", borderRadius: "12px", fontWeight: 600, fontSize: "13px", border: "1px solid #2a321b", background: "#11140d", color: archiving ? "#647049" : "#d7ff85", cursor: archiving ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+            {archiving ? "Packing..." : archiveUrl ? "Refresh Evidence Pack" : "Create Evidence Pack"}
           </button>
           <button onClick={() => router.push("/vaults")} style={{ padding: "14px", borderRadius: "12px", fontWeight: 600, fontSize: "13px", border: "1px solid #1a1a1a", background: "#0f0f0f", color: "white", cursor: "pointer", fontFamily: "inherit" }}>
             All Vaults

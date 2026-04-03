@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { IpfsUploadError, uploadJsonToIpfs } from "@/lib/ipfs";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,14 +22,20 @@ export async function POST(req: NextRequest) {
       protocol: "flowpilot-v1",
     };
 
-    // Upload to Lighthouse (Filecoin)
-    const content = JSON.stringify(archivePayload, null, 2);
-    const blob = new Blob([content], { type: "application/json" });
-    const formData = new FormData();
-    formData.append("file", blob, `vault-archive-${vault.id}.json`);
+    const upload = await uploadJsonToIpfs(
+      archivePayload,
+      `flowpilot-archive-${vault.id || Date.now()}.json`
+    );
 
     let lighthouseCID = null;
+    let lighthouseError = null;
+
     try {
+      const content = JSON.stringify(archivePayload, null, 2);
+      const blob = new Blob([content], { type: "application/json" });
+      const formData = new FormData();
+      formData.append("file", blob, `vault-archive-${vault.id}.json`);
+
       const lighthouseRes = await fetch("https://node.lighthouse.storage/api/v0/add", {
         method: "POST",
         headers: {
@@ -41,19 +48,26 @@ export async function POST(req: NextRequest) {
         const lighthouseData = await lighthouseRes.json();
         lighthouseCID = lighthouseData.Hash || lighthouseData.cid;
       }
-    } catch (e) {
-      console.log("Lighthouse upload attempt:", e);
+    } catch (error) {
+      lighthouseError = error instanceof Error ? error.message : "Lighthouse mirror failed";
     }
 
     return NextResponse.json({
       success: true,
       archived: true,
+      archiveCID: upload.cid,
+      archiveUrl: upload.ipfsUrl,
+      provider: upload.provider,
+      real: upload.real,
+      attempts: upload.attempts,
       lighthouseCID,
       filecoinUrl: lighthouseCID ? `https://gateway.lighthouse.storage/ipfs/${lighthouseCID}` : null,
+      lighthouseError,
       archivePayload,
     });
   } catch (error: unknown) {
+    const attempts = error instanceof IpfsUploadError ? error.attempts : [];
     const message = error instanceof Error ? error.message : "Archive failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message, attempts }, { status: 502 });
   }
 }

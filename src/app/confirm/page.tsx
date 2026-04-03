@@ -193,6 +193,27 @@ export default function ConfirmPage() {
   );
 
   const strategyColor = { conservative: "#00ff88", balanced: "#00d4ff", growth: "#ff6644" }[strategy.strategy_type];
+  const upsideMultiplier = strategy.strategy_type === "growth" ? 1.55 : strategy.strategy_type === "balanced" ? 1.35 : 1.15;
+  const scenarios = [
+    {
+      label: "Protected",
+      returnPct: strategy.exit_threshold_pct,
+      terminalValue: strategy.principal_usd * (1 + strategy.exit_threshold_pct / 100),
+      color: "#ff4466",
+    },
+    {
+      label: "Base",
+      returnPct: strategy.target_return_pct,
+      terminalValue: strategy.principal_usd * (1 + strategy.target_return_pct / 100),
+      color: "#00d4ff",
+    },
+    {
+      label: "Upside",
+      returnPct: Number((strategy.target_return_pct * upsideMultiplier).toFixed(2)),
+      terminalValue: strategy.principal_usd * (1 + (strategy.target_return_pct * upsideMultiplier) / 100),
+      color: "#00ff88",
+    },
+  ];
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", background: "#080808", fontFamily: "system-ui, sans-serif" }}>
@@ -263,6 +284,26 @@ export default function ConfirmPage() {
               <span>{item.text}</span>
             </div>
           ))}
+        </div>
+
+        <div style={{ background: "#0c1016", border: "1px solid #1a2433", borderRadius: "16px", padding: "16px", marginBottom: "20px" }}>
+          <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "2px", color: "#5f748d", marginBottom: "12px" }}>Scenario Preview</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "10px" }}>
+            {scenarios.map((scenario) => (
+              <div key={scenario.label} style={{ background: "#101722", borderRadius: "12px", padding: "12px", border: "1px solid #162131" }}>
+                <div style={{ fontSize: "11px", color: "#5f748d", marginBottom: "6px" }}>{scenario.label}</div>
+                <div style={{ fontSize: "18px", fontWeight: 800, color: "white", marginBottom: "4px" }}>
+                  ${scenario.terminalValue.toFixed(2)}
+                </div>
+                <div style={{ fontSize: "12px", color: scenario.color }}>
+                  {scenario.returnPct >= 0 ? "+" : ""}{scenario.returnPct}%
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: "12px", color: "#70859c", lineHeight: 1.6 }}>
+            This makes the strategy easier to demo: downside is capped by exit protection, base tracks the target plan, and upside reflects favorable compounding for the selected risk profile.
+          </div>
         </div>
 
         {isLaunching && (
