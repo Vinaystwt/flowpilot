@@ -47,6 +47,20 @@ function hasStorachaCliConfig() {
   return Boolean(readEnv("STORACHA_SPACE_DID"));
 }
 
+function getStorachaEnv() {
+  const env = { ...process.env } as NodeJS.ProcessEnv;
+  const storeName = readEnv("STORACHA_STORE_NAME") || "flowpilot-storacha";
+  const principal = readEnv("STORACHA_PRINCIPAL");
+
+  env.STORACHA_STORE_NAME = storeName;
+
+  if (principal) {
+    env.STORACHA_PRINCIPAL = principal;
+  }
+
+  return env;
+}
+
 function getGatewayUrl(provider: string, cid: string) {
   if (provider === "storacha-cli") {
     return `https://storacha.link/ipfs/${cid}`;
@@ -90,6 +104,50 @@ async function getStorachaCommand() {
       baseArgs: ["@storacha/cli"] as string[],
     };
   }
+}
+
+async function ensureStorachaSpace(spaceDid: string) {
+  const proof = readEnv("STORACHA_SPACE_PROOF");
+  const cli = await getStorachaCommand();
+  const env = getStorachaEnv();
+  let hasSpace = false;
+
+  try {
+    const { stdout, stderr } = await execFileAsync(
+      cli.command,
+      [...cli.baseArgs, "space", "ls"],
+      {
+        env,
+        cwd: process.cwd(),
+      }
+    );
+
+    hasSpace = `${stdout}\n${stderr}`.includes(spaceDid);
+  } catch (error) {
+    if (!proof) {
+      throw error;
+    }
+  }
+
+  if (!hasSpace && proof) {
+    await execFileAsync(
+      cli.command,
+      [...cli.baseArgs, "space", "add", proof],
+      {
+        env,
+        cwd: process.cwd(),
+      }
+    );
+  }
+
+  await execFileAsync(
+    cli.command,
+    [...cli.baseArgs, "space", "use", spaceDid],
+    {
+      env,
+      cwd: process.cwd(),
+    }
+  );
 }
 
 async function uploadToNftStorage(content: string, filename: string) {
@@ -213,15 +271,7 @@ async function uploadToPinata(content: string, filename: string) {
 }
 
 async function selectStorachaSpace(spaceDid: string) {
-  const cli = await getStorachaCommand();
-  await execFileAsync(
-    cli.command,
-    [...cli.baseArgs, "space", "use", spaceDid],
-    {
-      env: process.env,
-      cwd: process.cwd(),
-    }
-  );
+  await ensureStorachaSpace(spaceDid);
 }
 
 async function uploadToStorachaCli(content: string, filename: string) {
@@ -236,12 +286,13 @@ async function uploadToStorachaCli(content: string, filename: string) {
     await writeFile(tempPath, content, "utf8");
     await selectStorachaSpace(spaceDid);
     const cli = await getStorachaCommand();
+    const env = getStorachaEnv();
 
     const { stdout, stderr } = await execFileAsync(
       cli.command,
       [...cli.baseArgs, "up", tempPath, "--json", "--no-wrap"],
       {
-        env: process.env,
+        env,
         cwd: process.cwd(),
       }
     );
